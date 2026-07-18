@@ -11,8 +11,6 @@
         android:id="@+id/cardMic"
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:clickable="true"
-        android:focusable="true"
         app:cardBackgroundColor="#FF7043"
         app:cardCornerRadius="30dp"
         app:cardElevation="8dp">

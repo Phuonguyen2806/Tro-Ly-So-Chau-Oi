@@ -17,9 +17,15 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.ImageView
 import androidx.cardview.widget.CardView
 import com.example.chauoi.R
+import com.example.chauoi.ai.GeminiHelper
 import com.example.chauoi.tts.SpeechRecognitionManager
 import com.example.chauoi.tts.TextToSpeechManager
 import com.example.chauoi.utils.StepGuidance
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 class ScreenReaderService : AccessibilityService() {
@@ -37,6 +43,10 @@ class ScreenReaderService : AccessibilityService() {
     private val handler = Handler(Looper.getMainLooper())
     private var docManHinhRunnable: Runnable? = null
     private var lastPaymentInfoHash: Int = 0
+
+    // Cấu hình AI và Coroutines
+    private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val geminiHelper = GeminiHelper()
 
     // WindowManager để vẽ nút Micro nổi đè màn hình
     private lateinit var windowManager: WindowManager
@@ -77,23 +87,12 @@ class ScreenReaderService : AccessibilityService() {
                     // Reset màu sắc Micro khi nhận diện xong
                     resetMicButtonUi()
 
-                    if (clean.contains("xong") || clean.contains("tiếp tục") || clean.contains("rồi") || clean.contains("hướng dẫn")) {
-                        // Người dùng yêu cầu hướng dẫn lại hoặc chuyển tiếp
-                        val buocHienTai = nhanDienBuoc(currentTextContent)
-                        val huongDan = if (buocHienTai == "Bước 9: Xác nhận & Thanh toán") {
-                            trichXuatThongTinThanhToan(currentTextContent)
-                        } else {
-                            StepGuidance.getGuidance(buocHienTai)
-                        }
-                        if (huongDan.isNotEmpty()) {
-                            ttsManager.speak(huongDan)
-                        } else {
-                            ttsManager.speak("Cháu vẫn đang theo dõi màn hình, ông bà hãy làm theo từng bước ạ.")
-                        }
-                    } else if (clean.contains("thanh toán") && currentTextContent.contains("Thanh toán", ignoreCase = true)) {
-                        ttsManager.speak("Cháu đang tiến hành xác nhận đặt khám cho ông bà đây ạ.")
-                    } else {
-                        ttsManager.speak("Cháu nghe thấy từ khóa: $sentence. Ông bà cần cháu hướng dẫn thì nói: Hướng dẫn hoặc Xong rồi.")
+                    // Gửi câu hỏi lên Gemini AI
+                    ttsManager.speak("Ông bà đợi cháu một lát nhé.")
+                    serviceScope.launch {
+                        val answer = geminiHelper.askAssistant(currentTextContent, sentence)
+                        ttsManager.speak(answer)
+                        Log.d(TAG, "🤖 Gemini trả lời: $answer")
                     }
                 },
                 onErrorMsg = { error ->
@@ -151,8 +150,8 @@ class ScreenReaderService : AccessibilityService() {
                     val diffX = event.rawX - initialTouchX
                     val diffY = event.rawY - initialTouchY
                     
-                    // Nếu kéo đi xa quá 10px thì không coi là click nữa
-                    if (abs(diffX) > 10 || abs(diffY) > 10) {
+                    // Nếu kéo đi xa quá 50px thì không coi là click nữa (tránh màn hình quá nhạy)
+                    if (abs(diffX) > 50 || abs(diffY) > 50) {
                         isClick = false
                     }
 
@@ -262,6 +261,7 @@ class ScreenReaderService : AccessibilityService() {
         ttsManager.shutdown()
         speechManager?.destroy()
         speechManager = null
+        serviceScope.cancel() // Hủy scope khi tắt service
         
         // Xóa nút Micro nổi khi tắt Service
         floatingView?.let {
