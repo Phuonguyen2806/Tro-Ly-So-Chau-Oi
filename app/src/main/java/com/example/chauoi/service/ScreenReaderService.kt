@@ -26,9 +26,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlin.math.abs
-import com.example.chauoi.dichvu.DichVu
-import com.example.chauoi.dichvu.YouMedDichVu
-import com.example.chauoi.dichvu.VNeIDDichVu
+import com.example.chauoi.dichVu.CauHinhDichVu
+import com.example.chauoi.dichVu.DichVuLoader
 
 class ScreenReaderService : AccessibilityService() {
 
@@ -37,12 +36,9 @@ class ScreenReaderService : AccessibilityService() {
         private const val DELAY_MS = 800L
     }
 
-    // Danh sách dịch vụ được hỗ trợ. Muốn thêm dịch vụ mới:
-// tạo 1 class implement DichVu trong package "dichvu", rồi thêm 1 dòng vào đây.
-    private val dsDichVu: List<DichVu> = listOf(
-        YouMedDichVu(),
-        VNeIDDichVu()
-    )
+    // Danh sách dịch vụ được nạp từ assets/services/*.json khi service khởi động.
+    // Muốn thêm dịch vụ mới: chỉ cần thêm 1 file JSON vào assets/services/, KHÔNG cần sửa code ở đây.
+    private lateinit var dsDichVu: List<CauHinhDichVu>
 
     private lateinit var ttsManager: TextToSpeechManager
     private var speechManager: SpeechRecognitionManager? = null
@@ -51,15 +47,24 @@ class ScreenReaderService : AccessibilityService() {
     private val handler = Handler(Looper.getMainLooper())
     private var docManHinhRunnable: Runnable? = null
     private var lastDynamicHash: Int = 0
-    // Cấu hình AI và Coroutines
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val geminiHelper = GeminiHelper()
 
-    // WindowManager để vẽ nút Micro nổi đè màn hình
     private lateinit var windowManager: WindowManager
     private var floatingView: View? = null
     private var currentTextContent: String = ""
     private var currentPackageName: String = ""
+
+    // Chỗ DUY NHẤT còn giữ code cứng: các bước cần đọc nội dung ĐỘNG từ màn hình
+    // (ví dụ số tiền thanh toán thật) thay vì câu tĩnh lấy từ JSON.
+    // key = "tenPackage:idBuoc" -> hàm nhận allText, trả về câu cần đọc.
+    private val xuLyDacBietMap: Map<String, (String) -> String> = mapOf(
+        "com.youmed.info:buoc9_xac_nhan_thanh_toan" to { _ ->
+            "Bạn hãy đọc kỹ thông tin và xác nhận thanh toán."
+        }
+        // Thêm dịch vụ/bước mới cần xử lý động: thêm 1 dòng ở đây,
+        // với key = "<tenPackage>:<id trong JSON>"
+    )
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -73,12 +78,12 @@ class ScreenReaderService : AccessibilityService() {
         }
         serviceInfo = info
 
+        // Nạp cấu hình dịch vụ từ JSON thay vì danh sách class hard-code
+        dsDichVu = DichVuLoader.taiTatCa(this)
+        Log.d(TAG, "📦 Đã nạp ${dsDichVu.size} dịch vụ: ${dsDichVu.map { it.tenGoi }}")
+
         ttsManager = TextToSpeechManager(this)
-
-        // Khởi tạo Speech Recognizer lắng nghe khi người dùng bấm nút nổi
         initSpeechRecognizer()
-
-        // Khởi tạo và vẽ nút Micro nổi lên màn hình
         initFloatingMicrophone()
 
         Log.d(TAG, "✅ Cháu Ơi Service đã khởi động!")
@@ -92,10 +97,8 @@ class ScreenReaderService : AccessibilityService() {
                     val clean = sentence.lowercase()
                     Log.d(TAG, "🎙️ Service nghe thấy lệnh: \"$clean\"")
 
-                    // Reset màu sắc Micro khi nhận diện xong
                     resetMicButtonUi()
 
-                    // Gửi câu hỏi lên Gemini AI
                     ttsManager.speak("Ông bà đợi cháu một lát nhé.")
                     serviceScope.launch {
                         val answer = geminiHelper.askAssistant(currentTextContent, sentence)
@@ -117,15 +120,13 @@ class ScreenReaderService : AccessibilityService() {
     private fun initFloatingMicrophone() {
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
 
-        // Inflate view nổi
         val inflater = LayoutInflater.from(this)
         floatingView = inflater.inflate(R.layout.layout_floating_mic, null)
 
-        // Cài đặt vị trí layout đè lên các ứng dụng khác
         val layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY, // Dùng TYPE này để không cần xin thêm quyền vẽ phức tạp ở Realme
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         ).apply {
@@ -137,7 +138,6 @@ class ScreenReaderService : AccessibilityService() {
         val cardMic = floatingView?.findViewById<CardView>(R.id.cardMic)
         val imgMic = floatingView?.findViewById<ImageView>(R.id.imgMic)
 
-        // Sự kiện chạm để kéo thả hoặc bấm nút Micro
         var initialX = 0
         var initialY = 0
         var initialTouchX = 0f
@@ -158,7 +158,6 @@ class ScreenReaderService : AccessibilityService() {
                     val diffX = event.rawX - initialTouchX
                     val diffY = event.rawY - initialTouchY
 
-                    // Nếu kéo đi xa quá 50px thì không coi là click nữa (tránh màn hình quá nhạy)
                     if (abs(diffX) > 50 || abs(diffY) > 50) {
                         isClick = false
                     }
@@ -170,12 +169,8 @@ class ScreenReaderService : AccessibilityService() {
                 }
                 MotionEvent.ACTION_UP -> {
                     if (isClick) {
-                        // Click vào nút micro
-                        ttsManager.stop() // Dừng TTS ngay lập tức để không thu âm tạp âm
-
-                        // Đổi màu Micro sang màu Xanh báo hiệu đang nghe
+                        ttsManager.stop()
                         cardMic?.setCardBackgroundColor(0xFF4CAF50.toInt())
-
                         Log.d(TAG, "🎙️ [Người dùng chạm Mic] Bắt đầu ghi âm giọng nói...")
                         speechManager?.startListening()
                     }
@@ -185,7 +180,6 @@ class ScreenReaderService : AccessibilityService() {
             }
         }
 
-        // Vẽ view lên màn hình
         try {
             windowManager.addView(floatingView, layoutParams)
         } catch (e: Exception) {
@@ -195,7 +189,7 @@ class ScreenReaderService : AccessibilityService() {
 
     private fun resetMicButtonUi() {
         val cardMic = floatingView?.findViewById<CardView>(R.id.cardMic)
-        cardMic?.setCardBackgroundColor(0xFFFF7043.toInt()) // Đổi về màu cam ban đầu
+        cardMic?.setCardBackgroundColor(0xFFFF7043.toInt())
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -220,40 +214,38 @@ class ScreenReaderService : AccessibilityService() {
         rootNode.recycle()
         if (allText.isBlank()) return
 
-        // Lưu trữ text hiện tại để sử dụng khi người dùng yêu cầu hướng dẫn lại
+        // Bỏ qua nếu nội dung chữ trên màn hình giống hệt lần quét trước
+        if (allText == currentTextContent) {
+            return
+        }
+
         currentTextContent = allText
         currentPackageName = packageName
 
         Log.d(TAG, "📄 [${dichVu.tenGoi}] $allText")
-        val buocHienTai = dichVu.nhanDienBuoc(allText)
-        Log.d(TAG, "📍 $buocHienTai")
+        val buocHienTai = DichVuLoader.timBuocPhuHop(dichVu.buoc, allText)
+        Log.d(TAG, "📍 ${buocHienTai?.id ?: "Không nhận diện"}")
 
-        if (buocHienTai != buocTruocDo && buocHienTai != "Không nhận diện") {
-            buocTruocDo = buocHienTai
+        if (buocHienTai == null) return
 
-            val dong = dichVu.xuLyDacBiet(buocHienTai, allText)
-            val huongDan = if (dong != null) {
-                lastDynamicHash = dong.hashCode()
-                dong
-            } else {
-                lastDynamicHash = 0
-                dichVu.layHuongDan(buocHienTai)
-            }
+        val khoaXuLyDacBiet = "$packageName:${buocHienTai.id}"
+        val dong = if (buocHienTai.xuLyDacBiet) xuLyDacBietMap[khoaXuLyDacBiet]?.invoke(allText) else null
+
+        if (buocHienTai.id != buocTruocDo) {
+            buocTruocDo = buocHienTai.id
+            val huongDan = dong ?: buocHienTai.huongDan
+            lastDynamicHash = dong?.hashCode() ?: 0
 
             if (huongDan.isNotEmpty()) {
                 ttsManager.speak(huongDan)
                 Log.d(TAG, "🔊 $huongDan")
             }
-        } else {
-            val dong = dichVu.xuLyDacBiet(buocHienTai, allText)
-            if (dong != null) {
-                val currentHash = dong.hashCode()
-                if (currentHash != lastDynamicHash) {
-                    lastDynamicHash = currentHash
-                    buocTruocDo = buocHienTai
-                    ttsManager.speak(dong)
-                    Log.d(TAG, "🔊 [Thông tin thay đổi] $dong")
-                }
+        } else if (dong != null) {
+            val currentHash = dong.hashCode()
+            if (currentHash != lastDynamicHash) {
+                lastDynamicHash = currentHash
+                ttsManager.speak(dong)
+                Log.d(TAG, "🔊 [Thông tin thay đổi] $dong")
             }
         }
     }
@@ -269,9 +261,8 @@ class ScreenReaderService : AccessibilityService() {
         ttsManager.shutdown()
         speechManager?.destroy()
         speechManager = null
-        serviceScope.cancel() // Hủy scope khi tắt service
+        serviceScope.cancel()
 
-        // Xóa nút Micro nổi khi tắt Service
         floatingView?.let {
             try {
                 windowManager.removeView(it)
