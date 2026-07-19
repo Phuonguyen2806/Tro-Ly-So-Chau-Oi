@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Cháu Ơi</string>
     <string name="accessibility_description">Cháu Ơi theo dõi màn hình để hướng dẫn bạn đặt lịch khám bệnh bằng giọng nói</string>
+    <string name="app_version">Cháu Ơi v2.0 - Tích hợp AI Gemini</string>
 </resources>
