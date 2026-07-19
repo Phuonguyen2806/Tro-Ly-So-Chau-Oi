@@ -1,0 +1,71 @@
+{
+  "tenGoi": "VNeID",
+  "tenPackage": "com.vnid",
+  "tuKhoaGiongNoi": ["vneid", "căn cước", "cccd", "làm lại thẻ", "cấp lại thẻ", "làm mới thẻ", "cấp đổi thẻ", "đổi thẻ"],
+  "cauPhanHoiKhiMo": "Cháu đang mở ứng dụng VNeID để làm lại thẻ căn cước cho ông bà đây ạ!",
+  "buoc": [
+    {
+      "id": "bat_dau_cap_lai_cccd",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["Vui lòng nhập thông tin đăng nhập để tiếp tục"],
+      "huongDan": "Chào ông bà, cháu đang giúp ông bà làm lại Căn cước công dân trên VNeID. Đầu tiên, ông bà hãy nhập số căn cước công dân và mật khẩu hoặc dùng vân tay để đăng nhập nhé."
+    },
+    {
+      "id": "trang_chu",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["Ví giấy tờ", "Quét mã"],
+      "tuKhoaLoaiTru": ["Nhập passcode"],
+      "huongDan": "Ông bà đã đăng nhập thành công. Ở màn hình chính, ông bà hãy tìm và bấm vào ô 'Thủ tục hành chính' có biểu tượng hình tờ giấy nhé."
+    },
+    {
+      "id": "thu_tuc_hanh_chinh",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["Bạn đang muốn tìm kiếm"],
+      "huongDan": "Ông bà đang ở danh sách thủ tục. Hãy tìm dòng 'Cấp đổi thẻ Căn cước' hoặc 'Cấp lại thẻ Căn cước' rồi bấm vào đó ạ."
+    },
+    {
+      "id": "chon_loai_thu_tuc",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["Đề nghị cấp đổi Căn cước khai cho bản thân"],
+      "huongDan": "Bây giờ ông bà hãy chọn 'Bản thân' nếu làm cho chính mình, hoặc 'Khai hộ' nếu làm hộ cho người khác nhé."
+    },
+    {
+      "id": "trang_tao_yeu_cau",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["Tạo mới yêu cầu"],
+      "huongDan": "Ông bà đang ở trang Cấp đổi thẻ Căn cước. Hãy bấm vào nút 'Tạo mới yêu cầu' màu xanh ở giữa màn hình nhé."
+    },
+    {
+      "id": "nhap_passcode",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["Nhập passcode"],
+      "huongDan": "Ông bà hãy nhập mã passcode sáu số quen thuộc của mình để tiếp tục nhé."
+    },
+    {
+      "id": "kiem_tra_thong_tin_ca_nhan",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["Kiểm tra thông tin"],
+      "tuKhoaLoaiTru": ["Bạn đang muốn tìm kiếm"],
+      "huongDan": "Ông bà hãy nhìn vào màn hình kiểm tra lại các thông tin: Họ tên, giới tính, ngày tháng năm sinh, số định danh cá nhân và số điện thoại đã đúng chưa ạ. Nếu mọi thông tin đã đúng, hãy bấm vào nút 'Kiểm tra thông tin' màu đỏ ở phía dưới nhé."
+    },
+    {
+      "id": "chon_noi_lam_thu_tuc",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["Cấp thực hiện", "Cơ quan thực hiện"],
+      "tuKhoaLoaiTru": ["Tôi xin cam đoan"],
+      "huongDan": "Đến bước này, ông bà hãy chọn nơi mình muốn đến làm thủ tục, ví dụ chọn Công an phường hoặc Công an quận nơi ông bà đang sinh sống. Sau đó, ông bà chọn một ngày trong lịch mà ông bà thấy thuận tiện để đến chụp ảnh ạ."
+    },
+    {
+      "id": "xac_nhan_nop_ho_so",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["Tôi xin cam đoan"],
+      "huongDan": "Chỉ còn bước cuối cùng thôi ạ! Ông bà hãy đọc qua một chút, sau đó tích vào ô 'Tôi xin cam đoan' và bấm nút 'Nộp hồ sơ'. Cháu chúc ông bà làm hồ sơ thuận lợi nhé!"
+    },
+    {
+      "id": "hoan_thanh_nop_ho_so",
+      "kieuKhop": "ANY",
+      "tuKhoa": ["đã được đặt thành công", "Tạo yêu cầu thành công", "Nộp hồ sơ thành công"],
+      "huongDan": "Tuyệt vời! Ông bà đã nộp hồ sơ thành công rồi. Ứng dụng sẽ sớm gửi thông báo hoặc tin nhắn hẹn ngày giờ, ông bà nhớ chú ý điện thoại nhé!"
+    }
+  ]
+}

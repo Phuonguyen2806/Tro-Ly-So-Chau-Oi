@@ -2,4 +2,11 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="bg_cream">#FDF6F0</color>
+    <color name="text_dark">#3E2723</color>
+    <color name="text_body">#5D4037</color>
+    <color name="text_muted">#8D6E63</color>
+    <color name="accent_mic">#FF7043</color>
+    <color name="service_youmed">#43A047</color>
+    <color name="service_vneid">#1E88E5</color>
 </resources>
