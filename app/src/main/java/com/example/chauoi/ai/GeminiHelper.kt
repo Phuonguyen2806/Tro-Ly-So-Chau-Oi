@@ -1,5 +1,6 @@
 package com.example.chauoi.ai
 
+import com.example.chauoi.BuildConfig
 import com.google.ai.client.generativeai.GenerativeModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
