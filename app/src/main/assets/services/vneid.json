@@ -1,21 +1,61 @@
 {
   "tenGoi": "VNeID",
   "tenPackage": "com.vnid",
-  "tuKhoaGiongNoi": ["vneid", "căn cước", "cccd", "làm lại thẻ", "cấp lại thẻ", "làm mới thẻ", "cấp đổi thẻ", "đổi thẻ"],
-  "cauPhanHoiKhiMo": "Cháu đang mở ứng dụng VNeID để làm lại thẻ căn cước cho ông bà đây ạ!",
+  "tuKhoaGiongNoi": ["vneid", "căn cước", "cccd"],
+  "cauPhanHoiKhiMo": "Cháu đang mở ứng dụng VNeID cho ông bà đây ạ!",
+  "mucDich": [
+    {
+      "id": "cap_doi_cccd",
+      "tenGoi": "Cấp đổi/cấp lại thẻ Căn cước",
+      "tuKhoaGiongNoi": ["làm lại thẻ", "cấp lại thẻ", "làm mới thẻ", "cấp đổi thẻ", "đổi thẻ"]
+    },
+    {
+      "id": "xem_the_can_cuoc",
+      "tenGoi": "Xem thẻ Căn cước điện tử",
+      "tuKhoaGiongNoi": ["xem thẻ căn cước", "xem căn cước của tôi", "thẻ căn cước của tôi", "xem cccd"]
+    },
+    {
+      "id": "xem_gplx",
+      "tenGoi": "Xem Giấy phép lái xe",
+      "tuKhoaGiongNoi": ["giấy phép lái xe", "bằng lái xe", "xem bằng lái"]
+    },
+    {
+      "id": "xem_bhyt",
+      "tenGoi": "Xem thẻ Bảo hiểm y tế",
+      "tuKhoaGiongNoi": ["bảo hiểm y tế", "bhyt", "xem thẻ bảo hiểm"]
+    },
+    {
+      "id": "tra_cuu_cu_tru",
+      "tenGoi": "Xem thông tin cư trú",
+      "tuKhoaGiongNoi": ["thông tin cư trú", "nơi thường trú", "địa chỉ thường trú của tôi"]
+    },
+    {
+      "id": "tra_cuu_dang_ky_xe",
+      "tenGoi": "Xem thông tin đăng ký xe",
+      "tuKhoaGiongNoi": ["đăng ký xe", "biển số xe của tôi", "xe của tôi"]
+    }
+  ],
   "buoc": [
     {
       "id": "bat_dau_cap_lai_cccd",
       "kieuKhop": "ALL",
       "tuKhoa": ["Vui lòng nhập thông tin đăng nhập để tiếp tục"],
-      "huongDan": "Chào ông bà, cháu đang giúp ông bà làm lại Căn cước công dân trên VNeID. Đầu tiên, ông bà hãy nhập số căn cước công dân và mật khẩu hoặc dùng vân tay để đăng nhập nhé."
+      "huongDan": "Chào ông bà, cháu đang giúp ông bà thao tác trên VNeID. Đầu tiên, ông bà hãy nhập số căn cước công dân và mật khẩu hoặc dùng vân tay để đăng nhập nhé."
     },
     {
       "id": "trang_chu",
       "kieuKhop": "ALL",
       "tuKhoa": ["Ví giấy tờ", "Quét mã"],
       "tuKhoaLoaiTru": ["Nhập passcode"],
-      "huongDan": "Ông bà đã đăng nhập thành công. Ở màn hình chính, ông bà hãy tìm và bấm vào ô 'Thủ tục hành chính' có biểu tượng hình tờ giấy nhé."
+      "huongDan": "Ông bà đã đăng nhập thành công vào VNeID. Ông bà muốn xem giấy tờ nào, hay làm thủ tục gì ạ? Ông bà nói rõ hơn để cháu hướng dẫn tiếp nhé.",
+      "huongDanTheoMucDich": {
+        "cap_doi_cccd": "Ông bà đã đăng nhập thành công. Ở màn hình chính, ông bà hãy tìm và bấm vào ô 'Thủ tục hành chính' có biểu tượng hình tờ giấy nhé.",
+        "xem_the_can_cuoc": "Ông bà đã đăng nhập thành công. Ông bà hãy tìm icon 'Thẻ Căn cước/CCCD' ở hàng Tiện ích yêu thích rồi bấm vào đó để xem thẻ nhé.",
+        "xem_gplx": "Ông bà đã đăng nhập thành công. Ông bà hãy tìm icon 'Giấy phép lái xe' ở hàng Tiện ích yêu thích rồi bấm vào đó nhé.",
+        "xem_bhyt": "Ông bà đã đăng nhập thành công. Ông bà hãy tìm icon 'Thẻ BHYT' ở hàng Tiện ích yêu thích rồi bấm vào đó để xem thẻ bảo hiểm y tế nhé.",
+        "tra_cuu_cu_tru": "Ông bà đã đăng nhập thành công. Ông bà hãy tìm icon 'Thông tin cư trú' ở hàng Tiện ích yêu thích rồi bấm vào đó nhé.",
+        "tra_cuu_dang_ky_xe": "Ông bà đã đăng nhập thành công. Ông bà hãy tìm icon 'Đăng ký xe' ở hàng Tiện ích yêu thích rồi bấm vào đó nhé."
+      }
     },
     {
       "id": "thu_tuc_hanh_chinh",

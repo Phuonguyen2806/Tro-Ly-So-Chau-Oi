@@ -37,4 +37,22 @@ class GeminiHelper {
             }
         }
     }
+
+    suspend fun hoiTuDo(prompt: String): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                val promptAnToan = prompt + "\nLưu ý: TRẢ LỜI VĂN BẢN TRƠN, TUYỆT ĐỐI KHÔNG DÙNG ký tự Markdown như dấu sao (*) hay dấu thăng (#) vì hệ thống đọc giọng nói (TTS) sẽ bị lỗi."
+
+                val response = generativeModel.generateContent(promptAnToan)
+                val rawText = response.text ?: "Cháu chưa rõ bước này, ông bà thử hỏi cháu trực tiếp nhé."
+
+                rawText.replace("*", "")
+                    .replace("#", "")
+                    .replace("_", "")
+            } catch (e: Exception) {
+                android.util.Log.e("ChauOiService", "Lỗi Gemini API: ", e)
+                "Cháu chưa rõ bước này, ông bà thử hỏi cháu trực tiếp nhé."
+            }
+        }
+    }
 }
