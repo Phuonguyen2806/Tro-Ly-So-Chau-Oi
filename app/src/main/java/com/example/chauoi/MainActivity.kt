@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnMicro: CardView
     private lateinit var btnOpenYouMed: Button
     private lateinit var btnOpenVNeID: Button
+    private lateinit var btnOpenVssID: Button
 
     // Danh sách dịch vụ nạp từ assets/services/*.json thay vì khai báo cứng danh sách class
     private lateinit var dsDichVu: List<CauHinhDichVu>
@@ -54,7 +55,7 @@ class MainActivity : AppCompatActivity() {
         btnMicro = findViewById(R.id.btnMicro)
         btnOpenYouMed = findViewById(R.id.btnOpenYouMed)
         btnOpenVNeID = findViewById(R.id.btnOpenVNeID)
-
+        btnOpenVssID = findViewById(R.id.btnOpenVssID)
         ttsManager = TextToSpeechManager(this)
         checkRecordAudioPermission()
         initSpeechRecognizer()
@@ -73,6 +74,9 @@ class MainActivity : AppCompatActivity() {
 
         btnOpenVNeID.setOnClickListener {
             dsDichVu.find { it.tenPackage == "com.vnid" }?.moUngDung(this)
+        }
+        btnOpenVssID.setOnClickListener {
+            dsDichVu.find { it.tenPackage == "com.bhxhapp" }?.moUngDung(this)
         }
     }
 
@@ -109,9 +113,12 @@ class MainActivity : AppCompatActivity() {
                 tvStatus.text = "Bạn vừa nói: \"$sentence\""
                 val cleanSentence = sentence.lowercase()
 
-                val dichVuPhuHop = dsDichVu.find { dichVu ->
-                    dichVu.tuKhoaGiongNoi.any { tuKhoa -> cleanSentence.contains(tuKhoa) }
-                }
+                val dichVuPhuHop = dsDichVu.map { dichVu ->
+                    // Đếm số từ khóa trong câu nói khớp với danh sách từ khóa của dịch vụ
+                    val score = dichVu.tuKhoaGiongNoi.count { cleanSentence.contains(it) }
+                    dichVu to score
+                }.filter { it.second > 0 } // Chỉ lấy những dịch vụ có điểm > 0
+                    .maxByOrNull { it.second }?.first // Chọn dịch vụ có nhiều từ khóa khớp nhất
 
                 if (dichVuPhuHop != null) {
                     ttsManager.speak(dichVuPhuHop.cauPhanHoiKhiMo)

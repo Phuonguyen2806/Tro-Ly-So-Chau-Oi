@@ -1,0 +1,53 @@
+{
+  "tenGoi": "VssID",
+  "tenPackage": "com.bhxhapp",
+  "tuKhoaGiongNoi": ["vssid", "bảo hiểm", "làm lại thẻ", "cấp lại", "đổi thẻ", "mất thẻ"],
+  "cauPhanHoiKhiMo": "Cháu đang mở ứng dụng VssID để ông bà cấp lại thẻ bảo hiểm đây ạ!",
+  "buoc": [
+    {
+      "id": "bat_dau_dang_nhap",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["Mật khẩu", "Đăng nhập"],
+      "huongDan": "Chào ông bà, ông bà hãy nhập mã số bảo hiểm và mật khẩu vào các ô tương ứng rồi bấm 'Đăng nhập' nhé hoặc Ông bà đăng nhập bằng tài khoản định danh điện tử ạ."
+    },
+    {
+      "id": "chon_dich_vu_cong",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["Dịch vụ công"],
+      "huongDan": "Ở màn hình chính, ông bà hãy tìm phía dưới màn hình và chọn mục 'Dịch vụ công' có biểu tượng chiếc cặp tài liệu nhé."
+    },
+    {
+      "id": "chon_thu_tuc_cap_lai",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["Cấp lại thẻ BHYT", "hỏng", "mất"],
+      "huongDan": "Trong danh sách dịch vụ, ông bà hãy tìm dòng 'Cấp lại thẻ BHYT do hỏng, mất' rồi bấm vào đó ạ."
+    },
+
+    {
+      "id": "huong_dan_nhan_tai_nha",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["Qua dịch vụ bưu chính", "Cước phí"],
+      "tuKhoaLoaiTru": ["BP tiếp nhận hồ sơ và trả kết quả"],
+      "huongDan": "Ông bà đã chọn nhận thẻ tại nhà. Bây giờ, ông bà hãy chọn Tỉnh, Huyện, Xã và nhập số nhà, tên đường vào ô trống bên dưới, sau đó mới bấm nút 'Gửi' ông bà nhé."
+    },
+    {
+      "id": "huong_dan_nhan_tai_co_quan",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["BP tiếp nhận hồ sơ và trả kết quả", "Gửi"],
+      "tuKhoaLoaiTru": ["dịch vụ bưu chính"],
+      "huongDan": "Ông bà đã chọn nhận thẻ tại cơ quan Bảo hiểm. Bây giờ ông bà hãy bấm nút 'Gửi' ở phía dưới là xong ạ."
+    },
+    {
+      "id": "xac_nhan_otp",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["Gửi", "Mã OTP"],
+      "huongDan": "Ông bà hãy bấm nút 'Gửi' để nhận mã OTP về 'email' hoặc 'số diện thoại' ạ. Khi có mã số, ông bà nhập vào ô trống rồi nhấn 'Xác nhận' là xong ạ."
+    },
+    {
+      "id": "hoan_thanh_nop_ho_so",
+      "kieuKhop": "ANY",
+      "tuKhoa": ["Nộp hồ sơ thành công", "Đã gửi hồ sơ"],
+      "huongDan": "Chúc mừng ông bà đã nộp hồ sơ cấp lại thẻ thành công! Hệ thống sẽ xử lý và thông báo kết quả cho ông bà sớm nhất ạ."
+    }
+  ]
+}
