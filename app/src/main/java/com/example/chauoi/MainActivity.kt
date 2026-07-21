@@ -109,11 +109,23 @@ class MainActivity : AppCompatActivity() {
                 tvStatus.text = "Bạn vừa nói: \"$sentence\""
                 val cleanSentence = sentence.lowercase()
 
+                // Tìm dịch vụ khớp với câu nói (khớp từ khóa chung HOẶC khớp từ khóa của mục đích con)
                 val dichVuPhuHop = dsDichVu.find { dichVu ->
-                    dichVu.tuKhoaGiongNoi.any { tuKhoa -> cleanSentence.contains(tuKhoa) }
+                    val khopDichVu = dichVu.tuKhoaGiongNoi.any { tuKhoa -> cleanSentence.contains(tuKhoa) }
+                    val khopMucDich = dichVu.mucDich.any { md ->
+                        md.tuKhoaGiongNoi.any { tuKhoa -> cleanSentence.contains(tuKhoa) }
+                    }
+                    khopDichVu || khopMucDich
                 }
 
                 if (dichVuPhuHop != null) {
+                    // Tìm xem có khớp đúng 1 mục đích cụ thể nào trong dịch vụ này không
+                    val mucDichKhop = dichVuPhuHop.mucDich.find { md ->
+                        md.tuKhoaGiongNoi.any { tuKhoa -> cleanSentence.contains(tuKhoa) }
+                    }
+                    // Lưu id của mục đích vào phiên làm việc hiện tại
+                    com.example.chauoi.dichVu.PhienLamViec.mucDichHienTai = mucDichKhop?.id
+
                     ttsManager.speak(dichVuPhuHop.cauPhanHoiKhiMo)
                     btnMicro.postDelayed({
                         dichVuPhuHop.moUngDung(this@MainActivity)

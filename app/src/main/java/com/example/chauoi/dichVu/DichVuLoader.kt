@@ -35,9 +35,21 @@ object DichVuLoader {
             tenPackage = obj.getString("tenPackage"),
             tuKhoaGiongNoi = obj.getJSONArray("tuKhoaGiongNoi").toStringList(),
             cauPhanHoiKhiMo = obj.getString("cauPhanHoiKhiMo"),
+            mucDich = if (obj.has("mucDich"))
+                obj.getJSONArray("mucDich").let { mang ->
+                    (0 until mang.length()).map { i -> parseMucDich(mang.getJSONObject(i)) }
+                } else emptyList(),
             buoc = obj.getJSONArray("buoc").let { mang ->
                 (0 until mang.length()).map { i -> parseBuoc(mang.getJSONObject(i)) }
             }
+        )
+    }
+
+    private fun parseMucDich(obj: JSONObject): MucDich {
+        return MucDich(
+            id = obj.getString("id"),
+            tenGoi = obj.getString("tenGoi"),
+            tuKhoaGiongNoi = obj.getJSONArray("tuKhoaGiongNoi").toStringList()
         )
     }
 
@@ -49,10 +61,13 @@ object DichVuLoader {
             tuKhoaLoaiTru = if (obj.has("tuKhoaLoaiTru"))
                 obj.getJSONArray("tuKhoaLoaiTru").toStringList() else emptyList(),
             huongDan = obj.getString("huongDan"),
+            huongDanTheoMucDich = if (obj.has("huongDanTheoMucDich")) {
+                val mapObj = obj.getJSONObject("huongDanTheoMucDich")
+                mapObj.keys().asSequence().associateWith { key -> mapObj.getString(key) }
+            } else emptyMap(),
             xuLyDacBiet = obj.optBoolean("xuLyDacBiet", false)
         )
     }
-
     private fun JSONArray.toStringList(): List<String> = (0 until length()).map { getString(it) }
 
     /**

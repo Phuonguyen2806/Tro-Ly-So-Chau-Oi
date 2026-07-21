@@ -54,6 +54,8 @@ class ScreenReaderService : AccessibilityService() {
     private var floatingView: View? = null
     private var currentTextContent: String = ""
     private var currentPackageName: String = ""
+    private var manHinhDangHoiAI: String? = null
+
 
     // Chỗ DUY NHẤT còn giữ code cứng: các bước cần đọc nội dung ĐỘNG từ màn hình
     // (ví dụ số tiền thanh toán thật) thay vì câu tĩnh lấy từ JSON.
@@ -210,30 +212,41 @@ class ScreenReaderService : AccessibilityService() {
     private fun docManHinh(packageName: String) {
         val dichVu = dsDichVu.find { it.tenPackage == packageName } ?: return
         val rootNode = rootInActiveWindow ?: return
+
+        // Kiểm tra lại: nội dung đọc được có THẬT SỰ thuộc đúng app đang theo dõi không.
+        // Tránh trường hợp giữa lúc chờ (DELAY_MS), màn hình bị 1 popup hệ thống
+        // (gợi ý mật khẩu Google, thông báo...) hoặc launcher đè lên, khiến app
+        // tưởng nhầm đang đọc VNeID/YouMed trong khi thực chất đang đọc app khác.
+        val rootPackageName = rootNode.packageName?.toString()
+        if (rootPackageName != dichVu.tenPackage) {
+            rootNode.recycle()
+            Log.d(TAG, "⏭ Bỏ qua vì cửa sổ hiện tại thuộc package khác: $rootPackageName")
+            return
+        }
+
         val allText = collectAllText(rootNode)
         rootNode.recycle()
         if (allText.isBlank()) return
 
-        // Bỏ qua nếu nội dung chữ trên màn hình giống hệt lần quét trước
-        if (allText == currentTextContent) {
-            return
-        }
-
         currentTextContent = allText
         currentPackageName = packageName
 
-        Log.d(TAG, "📄 [${dichVu.tenGoi}] $allText")
         val buocHienTai = DichVuLoader.timBuocPhuHop(dichVu.buoc, allText)
         Log.d(TAG, "📍 ${buocHienTai?.id ?: "Không nhận diện"}")
 
-        if (buocHienTai == null) return
+        if (buocHienTai == null) {
+            // Không có bước nào trong JSON khớp -> nhờ AI sinh hướng dẫn tạm thời,
+            // dựa trên đúng mục đích (Goal) người dùng đã nói lúc đầu.
+            xuLyManHinhChuaBietBangAI(dichVu.tenGoi, allText)
+            return
+        }
 
         val khoaXuLyDacBiet = "$packageName:${buocHienTai.id}"
         val dong = if (buocHienTai.xuLyDacBiet) xuLyDacBietMap[khoaXuLyDacBiet]?.invoke(allText) else null
 
         if (buocHienTai.id != buocTruocDo) {
             buocTruocDo = buocHienTai.id
-            val huongDan = dong ?: buocHienTai.huongDan
+            val huongDan = dong ?: buocHienTai.layHuongDan(com.example.chauoi.dichVu.PhienLamViec.mucDichHienTai)
             lastDynamicHash = dong?.hashCode() ?: 0
 
             if (huongDan.isNotEmpty()) {
@@ -283,5 +296,39 @@ class ScreenReaderService : AccessibilityService() {
             child.recycle()
         }
         return sb.toString()
+    }
+
+    private fun xuLyManHinhChuaBietBangAI(tenDichVu: String, allText: String) {
+        // Tránh gọi AI liên tục nếu vẫn đang ở đúng màn hình chưa biết đó
+        if (allText == manHinhDangHoiAI) return
+        manHinhDangHoiAI = allText
+
+        val mucDich = com.example.chauoi.dichVu.PhienLamViec.mucDichHienTai
+            ?: "chưa rõ mục đích cụ thể"
+
+        serviceScope.launch {
+            val prompt = """
+                Bạn đang giúp người cao tuổi thao tác trên ứng dụng $tenDichVu.
+                Mục đích người dùng muốn làm: $mucDich
+                Đây là màn hình MỚI, hệ thống chưa từng gặp trước đây.
+                Nội dung màn hình hiện tại:
+                ${allText.take(1200)}
+
+                Hãy đưa ra 1 câu hướng dẫn ngắn gọn (dưới 30 chữ), xưng "cháu",
+                gọi người dùng là "ông bà", nói rõ nên bấm vào đâu tiếp theo.
+                Nếu không đủ căn cứ để chắc chắn, hãy khuyên ông bà đọc kỹ màn hình
+                hoặc hỏi lại, đừng đoán bừa.
+            """.trimIndent()
+
+            val huongDan = geminiHelper.hoiTuDo(prompt)
+            ttsManager.speak(huongDan)
+
+            // Ghi log riêng để sau này rà lại và bổ sung thành 1 "buoc" thật vào JSON,
+            // biến hướng dẫn AI-sinh thành hướng dẫn đã kiểm chứng.
+            Log.w(TAG, "🤖 [CẦN RÀ SOÁT - màn hình chưa có trong JSON]\n" +
+                    "Dịch vụ: $tenDichVu | Mục đích: $mucDich\n" +
+                    "Text màn hình: ${allText.take(500)}\n" +
+                    "AI trả lời: $huongDan")
+        }
     }
 }
