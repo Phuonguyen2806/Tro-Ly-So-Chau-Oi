@@ -45,7 +45,11 @@ class GeminiHelper {
                 response.text ?: "Cháu không rõ câu trả lời, ông bà đợi cháu một lát nhé."
             } catch (e: Exception) {
                 android.util.Log.e("ChauOiService", "Lỗi Gemini API: ", e)
-                "Xin lỗi ông bà, mạng nhà mình đang chậm, cháu không nghe rõ ạ."
+                if (e.toString().contains("QuotaExceededException", ignoreCase = true)) {
+                    "Hệ thống đang quá tải, ông bà vui lòng đợi khoảng 1 phút rồi thử lại nhé."
+                } else {
+                    "Xin lỗi ông bà, mạng nhà mình đang chậm, cháu không nghe rõ ạ."
+                }
             }
         }
     }
@@ -68,7 +72,11 @@ class GeminiHelper {
                     .trim()
             } catch (e: Exception) {
                 android.util.Log.e("ChauOiService", "Lỗi Gemini API: ", e)
-                "Cháu chưa rõ bước này, ông bà thử hỏi cháu trực tiếp nhé."
+                if (e.toString().contains("QuotaExceededException", ignoreCase = true)) {
+                    "Hệ thống đang quá tải, ông bà vui lòng đợi khoảng 1 phút rồi thử lại nhé."
+                } else {
+                    "Cháu chưa rõ bước này, ông bà thử hỏi cháu trực tiếp nhé."
+                }
             }
         }
     }
