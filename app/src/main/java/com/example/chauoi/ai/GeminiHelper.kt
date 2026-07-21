@@ -16,21 +16,29 @@ class GeminiHelper {
         apiKey = apiKey
     )
 
-    suspend fun askAssistant(screenText: String, userQuestion: String): String {
+    /**
+     * Trả lời câu hỏi của người dùng bấm mic trong lúc dùng app.
+     *
+     * Prompt được tối ưu:
+     * - Biết đúng app đang dùng (tenDichVu) → không cần liệt kê tất cả app
+     * - Biết mục tiêu (mucDich) → trả lời đúng ngữ cảnh hơn
+     * - Giới hạn screenText 500 ký tự → tiết kiệm ~50% token so với trước
+     */
+    suspend fun askAssistant(
+        screenText: String,
+        userQuestion: String,
+        tenDichVu: String = "ứng dụng",
+        mucDich: String? = null
+    ): String {
         return withContext(Dispatchers.IO) {
             try {
+                val contextMucDich = if (mucDich != null) "Mục tiêu: $mucDich." else ""
                 val prompt = """
-                    Bạn là một người cháu ngoan, đóng vai trò trợ lý giọng nói trên điện thoại giúp ông bà cao tuổi thao tác trên điện thoại. Ông bà đang dùng một trong hai tính năng sau:
-                    1. Đặt lịch khám bệnh trên app YouMed
-                    2. Đăng ký cấp lại căn cước công dân (CCCD) qua app VNeID
-                    
-                    Nhiệm vụ của bạn là đưa ra một câu trả lời ngắn gọn (dưới 30 chữ), dễ nghe, thân thiện, và hướng dẫn đúng nút bấm cần thiết. KHÔNG ĐƯỢC trả lời dài dòng. KHÔNG dùng định dạng như dấu * hoặc gạch đầu dòng vì hệ thống sẽ đọc ra âm thanh.
+                    Vai trò: Cháu giúp ông bà thao tác $tenDichVu. $contextMucDich
+                    Màn hình hiện tại: ${screenText.take(500)}
+                    Ông bà hỏi: $userQuestion
 
-                    Nội dung đang hiển thị trên màn hình:
-                    $screenText
-                    
-                    Ông bà hỏi:
-                    $userQuestion
+                    Trả lời 1 câu dưới 25 chữ. Xưng "cháu", gọi "ông bà". Chỉ rõ tên nút bấm cụ thể. Không dùng dấu * # _ vì hệ thống đọc thành tiếng.
                 """.trimIndent()
 
                 val response = generativeModel.generateContent(prompt)
@@ -42,17 +50,22 @@ class GeminiHelper {
         }
     }
 
+    /**
+     * Sinh hướng dẫn cho màn hình chưa có trong JSON.
+     * Prompt được truyền vào từ ScreenReaderService với đầy đủ ngữ cảnh.
+     * Hàm này chỉ đảm bảo output không có ký tự Markdown gây lỗi TTS.
+     */
     suspend fun hoiTuDo(prompt: String): String {
         return withContext(Dispatchers.IO) {
             try {
-                val promptAnToan = prompt + "\nLưu ý: TRẢ LỜI VĂN BẢN TRƠN, TUYỆT ĐỐI KHÔNG DÙNG ký tự Markdown như dấu sao (*) hay dấu thăng (#) vì hệ thống đọc giọng nói (TTS) sẽ bị lỗi."
-
-                val response = generativeModel.generateContent(promptAnToan)
+                val response = generativeModel.generateContent(prompt)
                 val rawText = response.text ?: "Cháu chưa rõ bước này, ông bà thử hỏi cháu trực tiếp nhé."
 
+                // Xoá ký tự Markdown vì TTS sẽ đọc thành tiếng, gây khó nghe
                 rawText.replace("*", "")
                     .replace("#", "")
                     .replace("_", "")
+                    .trim()
             } catch (e: Exception) {
                 android.util.Log.e("ChauOiService", "Lỗi Gemini API: ", e)
                 "Cháu chưa rõ bước này, ông bà thử hỏi cháu trực tiếp nhé."
@@ -60,3 +73,4 @@ class GeminiHelper {
         }
     }
 }
+

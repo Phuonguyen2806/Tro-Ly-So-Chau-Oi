@@ -116,7 +116,12 @@ class ScreenReaderService : AccessibilityService() {
                             Log.d(TAG, "💬 Đang trong ${dichVuPhuHop.tenGoi}, xử lý như câu hỏi")
                             ttsManager.speak("Ông bà đợi cháu một lát nhé.")
                             serviceScope.launch {
-                                val answer = geminiHelper.askAssistant(currentTextContent, sentence)
+                                val answer = geminiHelper.askAssistant(
+                                    screenText = currentTextContent,
+                                    userQuestion = sentence,
+                                    tenDichVu = dichVuPhuHop.tenGoi,
+                                    mucDich = PhienLamViec.mucDichHienTai
+                                )
                                 ttsManager.speak(answer)
                                 Log.d(TAG, "🤖 Gemini trả lời: $answer")
                             }
@@ -144,7 +149,10 @@ class ScreenReaderService : AccessibilityService() {
                         // Không phải lệnh mở app → là câu hỏi → gửi Gemini trả lời
                         ttsManager.speak("Ông bà đợi cháu một lát nhé.")
                         serviceScope.launch {
-                            val answer = geminiHelper.askAssistant(currentTextContent, sentence)
+                            val answer = geminiHelper.askAssistant(
+                                screenText = currentTextContent,
+                                userQuestion = sentence
+                            )
                             ttsManager.speak(answer)
                             Log.d(TAG, "🤖 Gemini trả lời: $answer")
                         }
@@ -328,6 +336,20 @@ class ScreenReaderService : AccessibilityService() {
         floatingView = null
     }
 
+    /**
+     * Làm sạch text đọc từ màn hình trước khi gửi AI:
+     * - Xoá khoảng trắng thừa (nhiều dấu cách liên tiếp → 1 dấu cách)
+     * - Bỏ các từ trùng lặp liên tiếp (VD: "Chọn Chọn Chọn" → "Chọn")
+     * - Giới hạn độ dài để tiết kiệm token
+     */
+    private fun lamSachText(text: String, maxLength: Int = 600): String {
+        return text
+            .replace(Regex("\\s+"), " ")       // Nhiều khoảng trắng → 1 khoảng trắng
+            .replace(Regex("(\\S+)(\\s\\1)+"), "$1") // Bỏ từ trùng liên tiếp
+            .trim()
+            .take(maxLength)
+    }
+
     private fun collectAllText(node: AccessibilityNodeInfo): String {
         val sb = StringBuilder()
         node.text?.let { sb.append(it).append(" ") }
@@ -352,33 +374,30 @@ class ScreenReaderService : AccessibilityService() {
         manHinhDangHoiAI = allText
         dangHoiAI = true
 
-        val mucDich = PhienLamViec.mucDichHienTai ?: "chưa rõ mục đích cụ thể"
+        val mucDich = PhienLamViec.mucDichHienTai ?: "không rõ"
+        // Làm sạch text trước khi gửi AI: bỏ rác, cắt ngắn
+        val textSach = lamSachText(allText, maxLength = 600)
 
         serviceScope.launch {
             try {
+                // Prompt tối ưu: ngắn gọn, rõ vai trò, đủ ngữ cảnh
                 val prompt = """
-                    Bạn đang giúp người cao tuổi thao tác trên ứng dụng $tenDichVu.
-                    Mục đích người dùng muốn làm: $mucDich
-                    Đây là màn hình MỚI, hệ thống chưa từng gặp trước đây.
-                    Nội dung màn hình hiện tại:
-                    ${allText.take(1200)}
+                    Ứng dụng: $tenDichVu | Mục tiêu: $mucDich
+                    Màn hình: $textSach
 
-                    Hãy đưa ra 1 câu hướng dẫn ngắn gọn (dưới 30 chữ), xưng "cháu",
-                    gọi người dùng là "ông bà", nói rõ nên bấm vào đâu tiếp theo.
-                    Nếu không đủ căn cứ để chắc chắn, hãy khuyên ông bà đọc kỹ màn hình
-                    hoặc hỏi lại, đừng đoán bừa.
+                    Hướng dẫn 1 câu dưới 25 chữ. Xưng "cháu", gọi "ông bà".
+                    Nói rõ tên nút bấm tiếp theo. Không dùng dấu * # _.
+                    Nếu không chắc, khuyên ông bà đọc kỹ hoặc hỏi lại.
                 """.trimIndent()
 
                 val huongDan = geminiHelper.hoiTuDo(prompt)
                 ttsManager.speak(huongDan)
 
-                // Ghi log để sau rà soát và bổ sung vào JSON
                 Log.w(TAG, "🤖 [CẦN RÀ SOÁT - màn hình chưa có trong JSON]\n" +
                         "Dịch vụ: $tenDichVu | Mục đích: $mucDich\n" +
-                        "Text màn hình: ${allText.take(500)}\n" +
+                        "Text màn hình: ${textSach.take(300)}\n" +
                         "AI trả lời: $huongDan")
             } finally {
-                // Luôn tắt cờ dù thành công hay lỗi
                 dangHoiAI = false
             }
         }
