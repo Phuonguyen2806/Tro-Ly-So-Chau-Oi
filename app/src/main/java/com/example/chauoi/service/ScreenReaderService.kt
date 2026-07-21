@@ -49,6 +49,8 @@ class ScreenReaderService : AccessibilityService() {
     private var lastDynamicHash: Int = 0
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val geminiHelper = GeminiHelper()
+    // Cờ chống gọi AI chồng lên nhau khi nhiều màn hình lạ xuất hiện liên tiếp
+    private var dangHoiAI = false
 
     private lateinit var windowManager: WindowManager
     private var floatingView: View? = null
@@ -98,14 +100,33 @@ class ScreenReaderService : AccessibilityService() {
                 onResult = { sentence ->
                     val clean = sentence.lowercase()
                     Log.d(TAG, "🎙️ Service nghe thấy lệnh: \"$clean\"")
-
                     resetMicButtonUi()
 
-                    ttsManager.speak("Ông bà đợi cháu một lát nhé.")
-                    serviceScope.launch {
-                        val answer = geminiHelper.askAssistant(currentTextContent, sentence)
-                        ttsManager.speak(answer)
-                        Log.d(TAG, "🤖 Gemini trả lời: $answer")
+                    // Bước 1: Kiểm tra có phải lệnh mở dịch vụ không
+                    val dichVuPhuHop = dsDichVu.find { dv ->
+                        dv.tuKhoaGiongNoi.any { clean.contains(it) }
+                    }
+
+                    if (dichVuPhuHop != null) {
+                        // Bước 2: Nhận diện và lưu MỤC ĐÍCH cụ thể của người dùng
+                        val mucDichPhuHop = dichVuPhuHop.mucDich.find { md ->
+                            md.tuKhoaGiongNoi.any { clean.contains(it) }
+                        }
+                        val tenMucDich = mucDichPhuHop?.id ?: "chung"
+                        PhienLamViec.mucDichHienTai = tenMucDich
+                        Log.d(TAG, "🎯 Đã gán mục đích: $tenMucDich (${mucDichPhuHop?.tenGoi})")
+
+                        // Bước 3: Mở app + thông báo cho người dùng
+                        ttsManager.speak(dichVuPhuHop.cauPhanHoiKhiMo)
+                        dichVuPhuHop.moUngDung(this)
+                    } else {
+                        // Không phải lệnh mở app → là câu hỏi → gửi Gemini trả lời
+                        ttsManager.speak("Ông bà đợi cháu một lát nhé.")
+                        serviceScope.launch {
+                            val answer = geminiHelper.askAssistant(currentTextContent, sentence)
+                            ttsManager.speak(answer)
+                            Log.d(TAG, "🤖 Gemini trả lời: $answer")
+                        }
                     }
                 },
                 onErrorMsg = { error ->
@@ -299,36 +320,46 @@ class ScreenReaderService : AccessibilityService() {
     }
 
     private fun xuLyManHinhChuaBietBangAI(tenDichVu: String, allText: String) {
-        // Tránh gọi AI liên tục nếu vẫn đang ở đúng màn hình chưa biết đó
+        // Tránh gọi AI nếu vẫn đang ở đúng màn hình chưa biết đó
         if (allText == manHinhDangHoiAI) return
-        manHinhDangHoiAI = allText
+        // Tránh gọi AI chồng lên nhau khi nhiều màn hình lạ xuất hiện liên tiếp
+        if (dangHoiAI) {
+            Log.d(TAG, "⏳ Đang chờ AI phản hồi, bỏ qua màn hình mới")
+            return
+        }
 
-        val mucDich = com.example.chauoi.dichVu.PhienLamViec.mucDichHienTai
-            ?: "chưa rõ mục đích cụ thể"
+        manHinhDangHoiAI = allText
+        dangHoiAI = true
+
+        val mucDich = PhienLamViec.mucDichHienTai ?: "chưa rõ mục đích cụ thể"
 
         serviceScope.launch {
-            val prompt = """
-                Bạn đang giúp người cao tuổi thao tác trên ứng dụng $tenDichVu.
-                Mục đích người dùng muốn làm: $mucDich
-                Đây là màn hình MỚI, hệ thống chưa từng gặp trước đây.
-                Nội dung màn hình hiện tại:
-                ${allText.take(1200)}
+            try {
+                val prompt = """
+                    Bạn đang giúp người cao tuổi thao tác trên ứng dụng $tenDichVu.
+                    Mục đích người dùng muốn làm: $mucDich
+                    Đây là màn hình MỚI, hệ thống chưa từng gặp trước đây.
+                    Nội dung màn hình hiện tại:
+                    ${allText.take(1200)}
 
-                Hãy đưa ra 1 câu hướng dẫn ngắn gọn (dưới 30 chữ), xưng "cháu",
-                gọi người dùng là "ông bà", nói rõ nên bấm vào đâu tiếp theo.
-                Nếu không đủ căn cứ để chắc chắn, hãy khuyên ông bà đọc kỹ màn hình
-                hoặc hỏi lại, đừng đoán bừa.
-            """.trimIndent()
+                    Hãy đưa ra 1 câu hướng dẫn ngắn gọn (dưới 30 chữ), xưng "cháu",
+                    gọi người dùng là "ông bà", nói rõ nên bấm vào đâu tiếp theo.
+                    Nếu không đủ căn cứ để chắc chắn, hãy khuyên ông bà đọc kỹ màn hình
+                    hoặc hỏi lại, đừng đoán bừa.
+                """.trimIndent()
 
-            val huongDan = geminiHelper.hoiTuDo(prompt)
-            ttsManager.speak(huongDan)
+                val huongDan = geminiHelper.hoiTuDo(prompt)
+                ttsManager.speak(huongDan)
 
-            // Ghi log riêng để sau này rà lại và bổ sung thành 1 "buoc" thật vào JSON,
-            // biến hướng dẫn AI-sinh thành hướng dẫn đã kiểm chứng.
-            Log.w(TAG, "🤖 [CẦN RÀ SOÁT - màn hình chưa có trong JSON]\n" +
-                    "Dịch vụ: $tenDichVu | Mục đích: $mucDich\n" +
-                    "Text màn hình: ${allText.take(500)}\n" +
-                    "AI trả lời: $huongDan")
+                // Ghi log để sau rà soát và bổ sung vào JSON
+                Log.w(TAG, "🤖 [CẦN RÀ SOÁT - màn hình chưa có trong JSON]\n" +
+                        "Dịch vụ: $tenDichVu | Mục đích: $mucDich\n" +
+                        "Text màn hình: ${allText.take(500)}\n" +
+                        "AI trả lời: $huongDan")
+            } finally {
+                // Luôn tắt cờ dù thành công hay lỗi
+                dangHoiAI = false
+            }
         }
     }
 }

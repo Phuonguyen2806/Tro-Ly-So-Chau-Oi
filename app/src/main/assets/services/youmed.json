@@ -1,38 +1,18 @@
 {
   "tenGoi": "YouMed",
   "tenPackage": "com.youmed.info",
-  "tuKhoaGiongNoi": ["đặt lịch", "khám", "cháu ơi"],
+  "tuKhoaGiongNoi": ["đặt lịch", "khám", "youmed", "cháu ơi"],
   "cauPhanHoiKhiMo": "Cháu đang mở ứng dụng đặt lịch khám YouMed cho ông bà đây ạ!",
   "mucDich": [
     {
-      "id": "dat_kham_benh_vien",
-      "tenGoi": "Đặt khám bệnh viện",
-      "tuKhoaGiongNoi": ["đặt khám bệnh viện", "khám bệnh viện", "đặt lịch bệnh viện"]
+      "id": "dat_lich_kham",
+      "tenGoi": "đặt lịch khám bệnh viện",
+      "tuKhoaGiongNoi": ["đặt lịch", "đặt khám", "khám bệnh viện", "đặt lịch khám"]
     },
     {
-      "id": "dat_kham_bac_si",
-      "tenGoi": "Đặt khám bác sĩ",
-      "tuKhoaGiongNoi": ["đặt khám bác sĩ", "khám bác sĩ", "gặp bác sĩ"]
-    },
-    {
-      "id": "dat_kham_phong_kham",
-      "tenGoi": "Đặt khám phòng khám",
-      "tuKhoaGiongNoi": ["đặt khám phòng khám", "khám phòng khám"]
-    },
-    {
-      "id": "goi_video_bac_si",
-      "tenGoi": "Gọi video với bác sĩ",
-      "tuKhoaGiongNoi": ["gọi video", "gọi video bác sĩ", "video call bác sĩ"]
-    },
-    {
-      "id": "xem_ho_so_suc_khoe",
-      "tenGoi": "Xem hồ sơ sức khỏe",
-      "tuKhoaGiongNoi": ["hồ sơ sức khỏe", "xem hồ sơ sức khỏe", "kết quả khám cũ"]
-    },
-    {
-      "id": "dat_lich_tiem_chung",
-      "tenGoi": "Đặt lịch tiêm chủng",
-      "tuKhoaGiongNoi": ["tiêm chủng", "đặt lịch tiêm chủng", "tiêm vắc xin", "tiêm phòng"]
+      "id": "xem_ho_so",
+      "tenGoi": "xem hồ sơ sức khỏe",
+      "tuKhoaGiongNoi": ["hồ sơ", "xem kết quả", "kết quả khám"]
     }
   ],
   "buoc": [
@@ -64,7 +44,7 @@
     {
       "id": "ket_qua_tim_ho_so",
       "kieuKhop": "ALL",
-      "tuKhoa": ["Kết quả tìm kiếm", "Bệnh viện Lê Văn Thịnh"],
+      "tuKhoa": ["Kết quả tìm kiếm", "Xác nhận hồ sơ"],
       "huongDan": "Đã tìm thấy hồ sơ bệnh nhân. Hãy kiểm tra thông tin họ tên và ngày sinh. Nếu đúng, hãy bấm Xác nhận hồ sơ."
     },
     {
@@ -119,13 +99,8 @@
       "id": "trang_chu",
       "kieuKhop": "ALL",
       "tuKhoa": ["Tiêm chủng", "Trang chủ"],
-      "huongDan": "Bạn đã đăng nhập thành công vào YouMed. Ông bà muốn đặt khám bác sĩ, phòng khám, bệnh viện, hay xem hồ sơ sức khỏe ạ? Ông bà nói rõ hơn để cháu hướng dẫn tiếp nhé.",
+      "huongDan": "Ông bà đã vào YouMed rồi. Ông bà muốn làm gì ạ? Đặt lịch khám, xem hồ sơ hay tìm bác sĩ?",
       "huongDanTheoMucDich": {
-        "dat_kham_benh_vien": "Bạn đã đăng nhập thành công! Để đặt lịch khám bệnh viện, hãy bấm vào ô 'Đặt khám bệnh viện' nhé.",
-        "dat_kham_bac_si": "Ông bà đã vào trang chủ YouMed. Hãy bấm vào ô 'Đặt khám bác sĩ' để chọn bác sĩ ông bà muốn khám nhé.",
-        "dat_kham_phong_kham": "Ông bà đã vào trang chủ YouMed. Hãy bấm vào ô 'Đặt khám phòng khám' để chọn phòng khám gần nhà nhé.",
-        "goi_video_bac_si": "Ông bà đã vào trang chủ YouMed. Hãy bấm vào ô 'Gọi video với bác sĩ' để được bác sĩ tư vấn từ xa nhé.",
-        "xem_ho_so_suc_khoe": "Ông bà đã vào trang chủ YouMed. Hãy bấm vào ô 'Hồ sơ sức khoẻ' để xem lại kết quả khám và đơn thuốc cũ nhé.",
         "dat_lich_tiem_chung": "Ông bà đã vào trang chủ YouMed. Hãy bấm vào ô 'Đặt lịch Tiêm chủng' để đặt lịch tiêm phòng nhé."
       }
     },
