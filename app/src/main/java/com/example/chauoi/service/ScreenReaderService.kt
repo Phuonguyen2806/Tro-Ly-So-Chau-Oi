@@ -26,8 +26,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import android.content.Intent
 import com.example.chauoi.dichVu.CauHinhDichVu
 import com.example.chauoi.dichVu.DichVuLoader
+import com.example.chauoi.dichVu.PhienLamViec
 
 class ScreenReaderService : AccessibilityService() {
 
@@ -118,7 +120,15 @@ class ScreenReaderService : AccessibilityService() {
 
                         // Bước 3: Mở app + thông báo cho người dùng
                         ttsManager.speak(dichVuPhuHop.cauPhanHoiKhiMo)
-                        dichVuPhuHop.moUngDung(this)
+                        val intent = packageManager
+                            .getLaunchIntentForPackage(dichVuPhuHop.tenPackage)
+                        if (intent != null) {
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            startActivity(intent)
+                            Log.d(TAG, "🚀 Đã mở ứng dụng ${dichVuPhuHop.tenGoi}")
+                        } else {
+                            Log.w(TAG, "⚠️ Không tìm thấy app: ${dichVuPhuHop.tenPackage}")
+                        }
                     } else {
                         // Không phải lệnh mở app → là câu hỏi → gửi Gemini trả lời
                         ttsManager.speak("Ông bà đợi cháu một lát nhé.")
