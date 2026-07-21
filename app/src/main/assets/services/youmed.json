@@ -7,7 +7,7 @@
     {
       "id": "dat_lich_kham",
       "tenGoi": "đặt lịch khám bệnh viện",
-      "tuKhoaGiongNoi": ["đặt lịch", "đặt khám", "khám bệnh viện", "đặt lịch khám"]
+      "tuKhoaGiongNoi": ["đặt lịch", "đặt khám", "khám bệnh viện", "đặt lịch khám", "phòng khám", "khám phòng khám"]
     },
     {
       "id": "xem_ho_so",

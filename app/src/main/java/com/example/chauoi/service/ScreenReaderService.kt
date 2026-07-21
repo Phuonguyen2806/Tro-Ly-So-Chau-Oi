@@ -110,24 +110,35 @@ class ScreenReaderService : AccessibilityService() {
                     }
 
                     if (dichVuPhuHop != null) {
-                        // Bước 2: Nhận diện và lưu MỤC ĐÍCH cụ thể của người dùng
-                        val mucDichPhuHop = dichVuPhuHop.mucDich.find { md ->
-                            md.tuKhoaGiongNoi.any { clean.contains(it) }
-                        }
-                        val tenMucDich = mucDichPhuHop?.id ?: "chung"
-                        PhienLamViec.mucDichHienTai = tenMucDich
-                        Log.d(TAG, "🎯 Đã gán mục đích: $tenMucDich (${mucDichPhuHop?.tenGoi})")
-
-                        // Bước 3: Mở app + thông báo cho người dùng
-                        ttsManager.speak(dichVuPhuHop.cauPhanHoiKhiMo)
-                        val intent = packageManager
-                            .getLaunchIntentForPackage(dichVuPhuHop.tenPackage)
-                        if (intent != null) {
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            startActivity(intent)
-                            Log.d(TAG, "🚀 Đã mở ứng dụng ${dichVuPhuHop.tenGoi}")
+                        // Kiểm tra: đang ở trong app này rồi không?
+                        if (currentPackageName == dichVuPhuHop.tenPackage) {
+                            // Đang trong app rồi → là câu hỏi trong app, KHÔNG mở lại!
+                            Log.d(TAG, "💬 Đang trong ${dichVuPhuHop.tenGoi}, xử lý như câu hỏi")
+                            ttsManager.speak("Ông bà đợi cháu một lát nhé.")
+                            serviceScope.launch {
+                                val answer = geminiHelper.askAssistant(currentTextContent, sentence)
+                                ttsManager.speak(answer)
+                                Log.d(TAG, "🤖 Gemini trả lời: $answer")
+                            }
                         } else {
-                            Log.w(TAG, "⚠️ Không tìm thấy app: ${dichVuPhuHop.tenPackage}")
+                            // Chưa mở app này → nhận diện mục đích và mở app
+                            val mucDichPhuHop = dichVuPhuHop.mucDich.find { md ->
+                                md.tuKhoaGiongNoi.any { clean.contains(it) }
+                            }
+                            val tenMucDich = mucDichPhuHop?.id ?: "chung"
+                            PhienLamViec.mucDichHienTai = tenMucDich
+                            Log.d(TAG, "🎯 Đã gán mục đích: $tenMucDich (${mucDichPhuHop?.tenGoi})")
+
+                            ttsManager.speak(dichVuPhuHop.cauPhanHoiKhiMo)
+                            val intent = packageManager
+                                .getLaunchIntentForPackage(dichVuPhuHop.tenPackage)
+                            if (intent != null) {
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                startActivity(intent)
+                                Log.d(TAG, "🚀 Đã mở ứng dụng ${dichVuPhuHop.tenGoi}")
+                            } else {
+                                Log.w(TAG, "⚠️ Không tìm thấy app: ${dichVuPhuHop.tenPackage}")
+                            }
                         }
                     } else {
                         // Không phải lệnh mở app → là câu hỏi → gửi Gemini trả lời
