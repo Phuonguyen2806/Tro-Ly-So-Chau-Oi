@@ -26,20 +26,20 @@
       "id": "buoc1_dang_nhap",
       "kieuKhop": "ALL",
       "tuKhoa": ["Thông tin đăng nhập", "Nhập mật khẩu"],
-      "huongDan": "Bạn đang ở bước đăng nhập. Hãy nhập số điện thoại vào ô Thông tin đăng nhập. Sau đó nhập mật khẩu và bấm nút Đăng nhập."
+      "huongDan": "Ông bà đang ở bước đăng nhập. Hãy nhập số điện thoại vào ô Thông tin đăng nhập. Sau đó nhập mật khẩu và bấm nút Đăng nhập."
     },
     {
       "id": "buoc9_xac_nhan_thanh_toan",
       "kieuKhop": "ALL",
       "tuKhoa": ["Xác nhận thông tin", "Thanh toán"],
-      "huongDan": "Bạn đang ở bước xác nhận thông tin và thanh toán. Hãy kiểm tra lại tên bệnh viện, chuyên khoa, ngày giờ khám. Sau đó chọn phương thức thanh toán và bấm Thanh toán để hoàn tất.",
+      "huongDan": "Ông bà đang ở bước xác nhận thông tin và thanh toán. Hãy kiểm tra lại tên bệnh viện, chuyên khoa, ngày giờ khám. Sau đó chọn phương thức thanh toán và bấm Thanh toán để hoàn tất.",
       "xuLyDacBiet": true
     },
     {
       "id": "xac_nhan_ho_so",
       "kieuKhop": "ALL",
       "tuKhoa": ["Đây có phải hồ sơ của bạn không"],
-      "huongDan": "Vui lòng xác nhận hồ sơ của bạn. Nếu đúng, hãy bấm Xác nhận. Nếu không phải, hãy bấm Không."
+      "huongDan": "Vui lòng xác nhận hồ sơ của ông bà. Nếu đúng, hãy bấm Xác nhận. Nếu không phải, hãy bấm Không."
     },
     {
       "id": "ket_qua_tim_ho_so",
@@ -51,49 +51,49 @@
       "id": "tra_cuu_ho_so",
       "kieuKhop": "ALL",
       "tuKhoa": ["Tra cứu hồ sơ bệnh nhân", "Mã Bệnh Nhân"],
-      "huongDan": "Bạn đang ở màn hình tra cứu hồ sơ bệnh nhân. Hãy nhập Mã bệnh nhân, Họ tên và Ngày sinh, sau đó bấm nút Tra cứu."
+      "huongDan": "Ông bà đang ở màn hình tra cứu hồ sơ bệnh nhân. Hãy nhập Mã bệnh nhân, Họ tên và Ngày sinh, sau đó bấm nút Tra cứu."
     },
     {
       "id": "buoc8b_chon_gio_kham",
       "kieuKhop": "ALL",
       "tuKhoa": ["Chọn Giờ khám", "6 Giờ khám"],
-      "huongDan": "Bạn đang ở bước chọn giờ khám. Hãy chọn buổi sáng hoặc buổi chiều, sau đó bấm Tiếp tục để xác nhận."
+      "huongDan": "Ông bà đang ở bước chọn giờ khám. Hãy chọn buổi sáng hoặc buổi chiều, sau đó bấm Tiếp tục để xác nhận."
     },
     {
       "id": "buoc8_chon_ngay_kham",
       "kieuKhop": "ALL",
       "tuKhoa": ["Chọn Ngày khám", "5 Ngày khám"],
-      "huongDan": "Bạn đang ở bước chọn ngày khám. Hãy bấm vào ngày bạn muốn đến khám trên lịch."
+      "huongDan": "Ông bà đang ở bước chọn ngày khám. Hãy bấm vào ngày ông bà muốn đến khám trên lịch."
     },
     {
       "id": "buoc7_chon_benh_nhan",
       "kieuKhop": "ALL",
       "tuKhoa": ["Chọn Bệnh nhân", "4 Bệnh nhân"],
-      "huongDan": "Bạn cần chọn hồ sơ bệnh nhân. Nếu đã có hồ sơ, hãy chọn tên trong danh sách. Nếu chưa có, hãy bấm Tạo mới để tạo hồ sơ."
+      "huongDan": "Ông bà cần chọn hồ sơ bệnh nhân. Nếu đã có hồ sơ, hãy chọn tên trong danh sách. Nếu chưa có, hãy bấm Tạo mới để tạo hồ sơ."
     },
     {
       "id": "buoc6_chon_phong_kham",
       "kieuKhop": "ALL",
       "tuKhoa": ["Chọn Phòng khám", "3 Phòng khám"],
-      "huongDan": "Bạn đang ở bước chọn phòng khám. Hãy vuốt lên xuống để xem các phòng và bấm Chọn."
+      "huongDan": "Ông bà đang ở bước chọn phòng khám. Hãy vuốt lên xuống để xem các phòng và bấm Chọn."
     },
     {
       "id": "buoc5_chon_chuyen_khoa",
       "kieuKhop": "ALL",
       "tuKhoa": ["Chọn Chuyên khoa", "2 Chuyên khoa"],
-      "huongDan": "Bạn đang ở bước chọn chuyên khoa. Hãy chọn khoa phù hợp với bệnh của bạn, ví dụ Nội khoa, Nhi khoa hoặc Ngoại khoa."
+      "huongDan": "Ông bà đang ở bước chọn chuyên khoa. Hãy chọn khoa phù hợp với tình trạng sức khỏe của ông bà, ví dụ Nội khoa, Nhi khoa hoặc Ngoại khoa."
     },
     {
       "id": "buoc4_chon_doi_tuong",
       "kieuKhop": "ALL",
       "tuKhoa": ["Chọn Đối tượng khám", "Khám Dịch Vụ"],
-      "huongDan": "Bạn cần chọn đối tượng khám. Nếu có thẻ Bảo Hiểm Y Tế, hãy chọn Khám Bảo Hiểm Y Tế. Nếu không, hãy chọn Khám Dịch Vụ."
+      "huongDan": "Ông bà cần chọn đối tượng khám. Nếu có thẻ Bảo Hiểm Y Tế, hãy chọn Khám Bảo Hiểm Y Tế. Nếu không, hãy chọn Khám Dịch Vụ."
     },
     {
       "id": "buoc3_chon_benh_vien",
       "kieuKhop": "ALL",
       "tuKhoa": ["Nơi khám: Bệnh viện", "Đặt lịch ngay"],
-      "huongDan": "Bạn đang ở bước chọn bệnh viện. Hãy vuốt lên xuống để xem danh sách. Bấm Đặt lịch ngay tại bệnh viện bạn muốn đến."
+      "huongDan": "Ông bà đang ở bước chọn bệnh viện. Hãy vuốt lên xuống để xem danh sách. Bấm Đặt lịch ngay tại bệnh viện ông bà muốn đến."
     },
     {
       "id": "trang_chu",
@@ -108,7 +108,7 @@
       "id": "hoan_thanh",
       "kieuKhop": "ANY",
       "tuKhoa": ["Đặt lịch thành công", "Đặt khám thành công"],
-      "huongDan": "Chúc mừng! Bạn đã đặt lịch khám thành công. Hãy nhớ đến đúng giờ nhé!"
+      "huongDan": "Chúc mừng! Ông bà đã đặt lịch khám thành công. Hãy nhớ đến đúng giờ nhé!"
     }
   ]
 }
