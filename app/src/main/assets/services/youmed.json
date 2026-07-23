@@ -1,38 +1,18 @@
 {
   "tenGoi": "YouMed",
   "tenPackage": "com.youmed.info",
-  "tuKhoaGiongNoi": ["đặt lịch", "khám", "cháu ơi"],
+  "tuKhoaGiongNoi": ["đặt lịch", "khám", "youmed", "cháu ơi"],
   "cauPhanHoiKhiMo": "Cháu đang mở ứng dụng đặt lịch khám YouMed cho ông bà đây ạ!",
   "mucDich": [
     {
-      "id": "dat_kham_benh_vien",
-      "tenGoi": "Đặt khám bệnh viện",
-      "tuKhoaGiongNoi": ["đặt khám bệnh viện", "khám bệnh viện", "đặt lịch bệnh viện"]
+      "id": "dat_lich_kham",
+      "tenGoi": "đặt lịch khám bệnh viện",
+      "tuKhoaGiongNoi": ["đặt lịch", "đặt khám", "khám bệnh viện", "đặt lịch khám", "phòng khám", "khám phòng khám"]
     },
     {
-      "id": "dat_kham_bac_si",
-      "tenGoi": "Đặt khám bác sĩ",
-      "tuKhoaGiongNoi": ["đặt khám bác sĩ", "khám bác sĩ", "gặp bác sĩ"]
-    },
-    {
-      "id": "dat_kham_phong_kham",
-      "tenGoi": "Đặt khám phòng khám",
-      "tuKhoaGiongNoi": ["đặt khám phòng khám", "khám phòng khám"]
-    },
-    {
-      "id": "goi_video_bac_si",
-      "tenGoi": "Gọi video với bác sĩ",
-      "tuKhoaGiongNoi": ["gọi video", "gọi video bác sĩ", "video call bác sĩ"]
-    },
-    {
-      "id": "xem_ho_so_suc_khoe",
-      "tenGoi": "Xem hồ sơ sức khỏe",
-      "tuKhoaGiongNoi": ["hồ sơ sức khỏe", "xem hồ sơ sức khỏe", "kết quả khám cũ"]
-    },
-    {
-      "id": "dat_lich_tiem_chung",
-      "tenGoi": "Đặt lịch tiêm chủng",
-      "tuKhoaGiongNoi": ["tiêm chủng", "đặt lịch tiêm chủng", "tiêm vắc xin", "tiêm phòng"]
+      "id": "xem_ho_so",
+      "tenGoi": "xem hồ sơ sức khỏe",
+      "tuKhoaGiongNoi": ["hồ sơ", "xem kết quả", "kết quả khám"]
     }
   ],
   "buoc": [
@@ -46,86 +26,81 @@
       "id": "buoc1_dang_nhap",
       "kieuKhop": "ALL",
       "tuKhoa": ["Thông tin đăng nhập", "Nhập mật khẩu"],
-      "huongDan": "Bạn đang ở bước đăng nhập. Hãy nhập số điện thoại vào ô Thông tin đăng nhập. Sau đó nhập mật khẩu và bấm nút Đăng nhập."
+      "huongDan": "Ông bà đang ở bước đăng nhập. Hãy nhập số điện thoại vào ô Thông tin đăng nhập. Sau đó nhập mật khẩu và bấm nút Đăng nhập."
     },
     {
       "id": "buoc9_xac_nhan_thanh_toan",
       "kieuKhop": "ALL",
       "tuKhoa": ["Xác nhận thông tin", "Thanh toán"],
-      "huongDan": "Bạn đang ở bước xác nhận thông tin và thanh toán. Hãy kiểm tra lại tên bệnh viện, chuyên khoa, ngày giờ khám. Sau đó chọn phương thức thanh toán và bấm Thanh toán để hoàn tất.",
+      "huongDan": "Ông bà đang ở bước xác nhận thông tin và thanh toán. Hãy kiểm tra lại tên bệnh viện, chuyên khoa, ngày giờ khám. Sau đó chọn phương thức thanh toán và bấm Thanh toán để hoàn tất.",
       "xuLyDacBiet": true
     },
     {
       "id": "xac_nhan_ho_so",
       "kieuKhop": "ALL",
       "tuKhoa": ["Đây có phải hồ sơ của bạn không"],
-      "huongDan": "Vui lòng xác nhận hồ sơ của bạn. Nếu đúng, hãy bấm Xác nhận. Nếu không phải, hãy bấm Không."
+      "huongDan": "Vui lòng xác nhận hồ sơ của ông bà. Nếu đúng, hãy bấm Xác nhận. Nếu không phải, hãy bấm Không."
     },
     {
       "id": "ket_qua_tim_ho_so",
       "kieuKhop": "ALL",
-      "tuKhoa": ["Kết quả tìm kiếm", "Bệnh viện Lê Văn Thịnh"],
+      "tuKhoa": ["Kết quả tìm kiếm", "Xác nhận hồ sơ"],
       "huongDan": "Đã tìm thấy hồ sơ bệnh nhân. Hãy kiểm tra thông tin họ tên và ngày sinh. Nếu đúng, hãy bấm Xác nhận hồ sơ."
     },
     {
       "id": "tra_cuu_ho_so",
       "kieuKhop": "ALL",
       "tuKhoa": ["Tra cứu hồ sơ bệnh nhân", "Mã Bệnh Nhân"],
-      "huongDan": "Bạn đang ở màn hình tra cứu hồ sơ bệnh nhân. Hãy nhập Mã bệnh nhân, Họ tên và Ngày sinh, sau đó bấm nút Tra cứu."
+      "huongDan": "Ông bà đang ở màn hình tra cứu hồ sơ bệnh nhân. Hãy nhập Mã bệnh nhân, Họ tên và Ngày sinh, sau đó bấm nút Tra cứu."
     },
     {
       "id": "buoc8b_chon_gio_kham",
       "kieuKhop": "ALL",
       "tuKhoa": ["Chọn Giờ khám", "6 Giờ khám"],
-      "huongDan": "Bạn đang ở bước chọn giờ khám. Hãy chọn buổi sáng hoặc buổi chiều, sau đó bấm Tiếp tục để xác nhận."
+      "huongDan": "Ông bà đang ở bước chọn giờ khám. Hãy chọn buổi sáng hoặc buổi chiều, sau đó bấm Tiếp tục để xác nhận."
     },
     {
       "id": "buoc8_chon_ngay_kham",
       "kieuKhop": "ALL",
       "tuKhoa": ["Chọn Ngày khám", "5 Ngày khám"],
-      "huongDan": "Bạn đang ở bước chọn ngày khám. Hãy bấm vào ngày bạn muốn đến khám trên lịch."
+      "huongDan": "Ông bà đang ở bước chọn ngày khám. Hãy bấm vào ngày ông bà muốn đến khám trên lịch."
     },
     {
       "id": "buoc7_chon_benh_nhan",
       "kieuKhop": "ALL",
       "tuKhoa": ["Chọn Bệnh nhân", "4 Bệnh nhân"],
-      "huongDan": "Bạn cần chọn hồ sơ bệnh nhân. Nếu đã có hồ sơ, hãy chọn tên trong danh sách. Nếu chưa có, hãy bấm Tạo mới để tạo hồ sơ."
+      "huongDan": "Ông bà cần chọn hồ sơ bệnh nhân. Nếu đã có hồ sơ, hãy chọn tên trong danh sách. Nếu chưa có, hãy bấm Tạo mới để tạo hồ sơ."
     },
     {
       "id": "buoc6_chon_phong_kham",
       "kieuKhop": "ALL",
       "tuKhoa": ["Chọn Phòng khám", "3 Phòng khám"],
-      "huongDan": "Bạn đang ở bước chọn phòng khám. Hãy vuốt lên xuống để xem các phòng và bấm Chọn."
+      "huongDan": "Ông bà đang ở bước chọn phòng khám. Hãy vuốt lên xuống để xem các phòng và bấm Chọn."
     },
     {
       "id": "buoc5_chon_chuyen_khoa",
       "kieuKhop": "ALL",
       "tuKhoa": ["Chọn Chuyên khoa", "2 Chuyên khoa"],
-      "huongDan": "Bạn đang ở bước chọn chuyên khoa. Hãy chọn khoa phù hợp với bệnh của bạn, ví dụ Nội khoa, Nhi khoa hoặc Ngoại khoa."
+      "huongDan": "Ông bà đang ở bước chọn chuyên khoa. Hãy chọn khoa phù hợp với tình trạng sức khỏe của ông bà, ví dụ Nội khoa, Nhi khoa hoặc Ngoại khoa."
     },
     {
       "id": "buoc4_chon_doi_tuong",
       "kieuKhop": "ALL",
       "tuKhoa": ["Chọn Đối tượng khám", "Khám Dịch Vụ"],
-      "huongDan": "Bạn cần chọn đối tượng khám. Nếu có thẻ Bảo Hiểm Y Tế, hãy chọn Khám Bảo Hiểm Y Tế. Nếu không, hãy chọn Khám Dịch Vụ."
+      "huongDan": "Ông bà cần chọn đối tượng khám. Nếu có thẻ Bảo Hiểm Y Tế, hãy chọn Khám Bảo Hiểm Y Tế. Nếu không, hãy chọn Khám Dịch Vụ."
     },
     {
       "id": "buoc3_chon_benh_vien",
       "kieuKhop": "ALL",
       "tuKhoa": ["Nơi khám: Bệnh viện", "Đặt lịch ngay"],
-      "huongDan": "Bạn đang ở bước chọn bệnh viện. Hãy vuốt lên xuống để xem danh sách. Bấm Đặt lịch ngay tại bệnh viện bạn muốn đến."
+      "huongDan": "Ông bà đang ở bước chọn bệnh viện. Hãy vuốt lên xuống để xem danh sách. Bấm Đặt lịch ngay tại bệnh viện ông bà muốn đến."
     },
     {
       "id": "trang_chu",
       "kieuKhop": "ALL",
       "tuKhoa": ["Tiêm chủng", "Trang chủ"],
-      "huongDan": "Bạn đã đăng nhập thành công vào YouMed. Ông bà muốn đặt khám bác sĩ, phòng khám, bệnh viện, hay xem hồ sơ sức khỏe ạ? Ông bà nói rõ hơn để cháu hướng dẫn tiếp nhé.",
+      "huongDan": "Ông bà đã vào YouMed rồi. Ông bà muốn làm gì ạ? Đặt lịch khám, xem hồ sơ hay tìm bác sĩ?",
       "huongDanTheoMucDich": {
-        "dat_kham_benh_vien": "Bạn đã đăng nhập thành công! Để đặt lịch khám bệnh viện, hãy bấm vào ô 'Đặt khám bệnh viện' nhé.",
-        "dat_kham_bac_si": "Ông bà đã vào trang chủ YouMed. Hãy bấm vào ô 'Đặt khám bác sĩ' để chọn bác sĩ ông bà muốn khám nhé.",
-        "dat_kham_phong_kham": "Ông bà đã vào trang chủ YouMed. Hãy bấm vào ô 'Đặt khám phòng khám' để chọn phòng khám gần nhà nhé.",
-        "goi_video_bac_si": "Ông bà đã vào trang chủ YouMed. Hãy bấm vào ô 'Gọi video với bác sĩ' để được bác sĩ tư vấn từ xa nhé.",
-        "xem_ho_so_suc_khoe": "Ông bà đã vào trang chủ YouMed. Hãy bấm vào ô 'Hồ sơ sức khoẻ' để xem lại kết quả khám và đơn thuốc cũ nhé.",
         "dat_lich_tiem_chung": "Ông bà đã vào trang chủ YouMed. Hãy bấm vào ô 'Đặt lịch Tiêm chủng' để đặt lịch tiêm phòng nhé."
       }
     },
@@ -133,7 +108,7 @@
       "id": "hoan_thanh",
       "kieuKhop": "ANY",
       "tuKhoa": ["Đặt lịch thành công", "Đặt khám thành công"],
-      "huongDan": "Chúc mừng! Bạn đã đặt lịch khám thành công. Hãy nhớ đến đúng giờ nhé!"
+      "huongDan": "Chúc mừng! Ông bà đã đặt lịch khám thành công. Hãy nhớ đến đúng giờ nhé!"
     }
   ]
 }
