@@ -1,0 +1,111 @@
+{
+  "tenGoi": "VssID",
+  "tenPackage": "com.bhxhapp",
+  "tuKhoaGiongNoi": ["vssid", "bảo hiểm"],
+  "cauPhanHoiKhiMo": "Cháu đang mở ứng dụng VssID cho ông bà đây ạ!",
+  "mucDich": [
+    {
+      "id": "cap_lai_bhyt",
+      "tenGoi": "Cấp lại thẻ BHYT",
+      "tuKhoaGiongNoi": ["làm lại thẻ", "cấp lại thẻ", "mất thẻ", "đổi thẻ bảo hiểm"]
+    },
+    {
+      "id": "xem_the_bhyt",
+      "tenGoi": "Xem thẻ BHYT",
+      "tuKhoaGiongNoi": ["xem thẻ", "mở thẻ bảo hiểm", "thẻ bảo hiểm của tôi"]
+    },
+    {
+      "id": "tra_cuu_qua_trinh",
+      "tenGoi": "Xem quá trình tham gia",
+      "tuKhoaGiongNoi": ["quá trình tham gia", "sổ bảo hiểm", "thời gian đóng"]
+    },
+    {
+      "id": "tra_cuu_truc_tuyen",
+      "tenGoi": "Tra cứu trực tuyến",
+      "tuKhoaGiongNoi": ["tra cứu", "mã số bảo hiểm xã hội", "trực tuyến"]
+    },
+    {
+      "id": "so_kham_chua_benh",
+      "tenGoi": "Sổ khám chữa bệnh",
+      "tuKhoaGiongNoi": ["sổ", "sổ khám", "lịch sử khám bệnh"]
+    },
+    {
+      "id": "cap_lai_so_bhxh",
+      "tenGoi": "Cấp lại sổ BHXH",
+      "tuKhoaGiongNoi": ["cấp lại sổ", "làm lại sổ bảo hiểm xã hội", "mất sổ bảo hiểm"]
+    },
+    {
+      "id": "dang_ky_tai_khoan_cho_con",
+      "tenGoi": "Đăng ký tài khoản cho con",
+      "tuKhoaGiongNoi": ["đăng ký cho con", "làm tài khoản cho con", "đăng ký giao dịch điện tử cho con"]
+    }
+  ],
+  "buoc": [
+    {
+      "id": "bat_dau_dang_nhap",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["Mật khẩu", "Đăng nhập"],
+      "huongDan": "Chào ông bà, ông bà hãy nhập mã số bảo hiểm và mật khẩu vào các ô tương ứng rồi bấm 'Đăng nhập' nhé hoặc Ông bà đăng nhập bằng tài khoản định danh điện tử ạ."
+    },
+    {
+      "id": "trang_chu",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["Quản lý cá nhân"],
+      "huongDan": "Ông bà đã đăng nhập thành công vào VssID. Ông bà muốn xem thông tin gì hay làm thủ tục gì ạ? Ông bà nói rõ để cháu hướng dẫn tiếp nhé.",
+      "huongDanTheoMucDich": {
+        "cap_lai_bhyt": "Ông bà hãy tìm và bấm vào mục 'Dịch vụ công' có biểu tượng chiếc cặp tài liệu ở phía dưới màn hình, sau đó chọn thủ tục 'Cấp lại thẻ BHYT' nhé.",
+        "xem_the_bhyt": "Ông bà hãy tìm và bấm vào mục 'Thẻ BHYT' ở ngay giữa màn hình để xem bảo hiểm y tế hoặc ảnh nhé.",
+        "tra_cuu_qua_trinh": "Ông bà hãy tìm và bấm vào mục 'Quá trình tham gia' để xem lịch sử đóng bảo hiểm của mình ạ.",
+        "tra_cuu_truc_tuyen": "Ông bà hãy tìm và bấm vào mục 'Tra cứu trực tuyến' để tra cứu các thông tin về mã số bảo hiểm, cơ quan bảo hiểm hoặc các thông tin cần thiết khác ạ.",
+        "so_kham_chua_benh": "Ông bà hãy tìm và bấm vào mục 'Sổ khám chữa bệnh' để xem lịch sử các lần đi khám bệnh, chữa bệnh bảo hiểm y tế của mình nhé.",
+        "cap_lai_so_bhxh": "Ông bà hãy tìm và bấm vào mục 'Dịch vụ công' có biểu tượng chiếc cặp tài liệu ở phía dưới màn hình, sau đó chọn thủ tục 'Cấp lại sổ BHXH' nhé.",
+        "dang_ky_tai_khoan_cho_con": "Ông bà hãy tìm và bấm vào mục 'Dịch vụ công' có biểu tượng chiếc cặp tài liệu ở phía dưới màn hình, sau đó chọn thủ tục 'Đăng ký tài khoản cho con' nhé."
+      }
+    },
+    {
+      "id": "chon_thu_tuc_dang_ky_va_cap_lai",
+      "kieuKhop": "ALL",
+      "tuKhoa": ["Đăng ký tài khoản cho con", "Cấp lại thẻ BHYT", "Cấp lại số BHXH", "hỏng", "mất", "thay đổi thông tin"],
+      "tuKhoaLoaiTru": [
+        "Địa chỉ nhận kết quả",
+        "BP tiếp nhận hồ sơ và trả kết quả",
+        "Qua dịch vụ bưu chính",
+        "Tỉnh - TP",
+        "Phường - Xã",
+        "Số nhà, tên đường, tổ/xóm, khu phố/thôn"
+      ],
+      "huongDan": "Ông bà hãy nhìn lên màn hình danh sách dịch vụ công và tìm đúng tên thủ tục mình cần: Nếu muốn đăng ký tài khoản cho con thì bấm vào dòng '[ĐĂNG KÝ TÀI KHOẢN CHO CON]'. Nếu muốn cấp lại thẻ BHYT thì bấm dòng '[612A] CẤP LẠI THẺ BHYT DO HỎNG, MẤT'. Nếu muốn cấp lại sổ BHXH thì bấm dòng '[607A] CẤP LẠI SỔ BHXH KHÔNG THAY ĐỔI THÔNG TIN' hoặc '[608A]'. Ông bà chạm ngón tay vào dòng chữ đó để mở form kê khai nhé."
+    },
+    {
+      "id": "chon_va_dien_thong_tin_nhan_the",
+      "kieuKhop": "ANY",
+      "tuKhoa": [
+        "Địa chỉ nhận kết quả",
+        "BP tiếp nhận hồ sơ và trả kết quả",
+        "Qua dịch vụ bưu chính",
+        "Tỉnh - TP",
+        "Phường - Xã",
+        "Số nhà, tên đường, tổ/xóm, khu phố/thôn"
+      ],
+      "huongDan": "Ông bà chọn nhận thẻ tại cơ quan Bảo hiểm thì chọn dòng 'BP tiếp nhận hồ sơ và trả kết quả', hoặc nhận tại nhà qua bưu điện thì chọn 'Qua dịch vụ bưu chính'. Nếu ông bà chọn nhận tại nhà, ông bà nhớ chọn Tỉnh, Huyện, Xã và nhập địa chỉ chi tiết vào ô trống bên dưới rồi Gửi nhé ạ"
+    },
+    {
+      "id": "xu_ly_thong_bao_loi",
+      "kieuKhop": "ANY",
+      "tuKhoa": ["Thông báo", "Đóng"],
+      "huongDan": "Nếu hiện bảng thông báo, ông bà hãy bấm 'Đóng' để tiếp tục chọn thông tin nhé."
+    },
+    {
+      "id": "xac_nhan_otp",
+      "kieuKhop": "ANY",
+      "tuKhoa": ["Vui lòng nhập OTP!", "Xác nhận", "Hủy"],
+      "huongDan": "Ông bà nhập mã OTP vừa nhận được vào ô trống rồi nhấn 'Xác nhận' là xong ạ."
+    },
+    {
+      "id": "hoan_thanh_nop_ho_so",
+      "kieuKhop": "ANY",
+      "tuKhoa": ["Nộp hồ sơ thành công", "Đã gửi hồ sơ"],
+      "huongDan": "Chúc mừng ông bà đã nộp hồ sơ cấp lại thẻ thành công! Hệ thống sẽ xử lý và thông báo kết quả cho ông bà sớm nhất ạ."
+    }
+  ]
+}
