@@ -26,8 +26,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import android.content.Intent
+import android.util.LruCache
 import com.example.chauoi.dichVu.CauHinhDichVu
 import com.example.chauoi.dichVu.DichVuLoader
+import com.example.chauoi.dichVu.PhienLamViec
 
 class ScreenReaderService : AccessibilityService() {
 
@@ -49,6 +52,11 @@ class ScreenReaderService : AccessibilityService() {
     private var lastDynamicHash: Int = 0
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val geminiHelper = GeminiHelper()
+    // Cờ chống gọi AI chồng lên nhau khi nhiều màn hình lạ xuất hiện liên tiếp
+    private var dangHoiAI = false
+
+    // Bộ nhớ đệm LRU Cache lưu phản hồi của AI theo mã Hash của màn hình (lưu tối đa 50 màn hình)
+    private val screenResponseCache = LruCache<Int, String>(50)
 
     private lateinit var windowManager: WindowManager
     private var floatingView: View? = null
@@ -98,14 +106,60 @@ class ScreenReaderService : AccessibilityService() {
                 onResult = { sentence ->
                     val clean = sentence.lowercase()
                     Log.d(TAG, "🎙️ Service nghe thấy lệnh: \"$clean\"")
-
                     resetMicButtonUi()
 
-                    ttsManager.speak("Ông bà đợi cháu một lát nhé.")
-                    serviceScope.launch {
-                        val answer = geminiHelper.askAssistant(currentTextContent, sentence)
-                        ttsManager.speak(answer)
-                        Log.d(TAG, "🤖 Gemini trả lời: $answer")
+                    // Bước 1: Kiểm tra có phải lệnh mở dịch vụ không
+                    val dichVuPhuHop = dsDichVu.find { dv ->
+                        dv.tuKhoaGiongNoi.any { clean.contains(it) }
+                    }
+
+                    if (dichVuPhuHop != null) {
+                        // Kiểm tra: đang ở trong app này rồi không?
+                        if (currentPackageName == dichVuPhuHop.tenPackage) {
+                            // Đang trong app rồi → là câu hỏi trong app, KHÔNG mở lại!
+                            Log.d(TAG, "💬 Đang trong ${dichVuPhuHop.tenGoi}, xử lý như câu hỏi")
+                            ttsManager.speak("Ông bà đợi cháu một lát nhé.")
+                            serviceScope.launch {
+                                val answer = geminiHelper.askAssistant(
+                                    screenText = currentTextContent,
+                                    userQuestion = sentence,
+                                    tenDichVu = dichVuPhuHop.tenGoi,
+                                    mucDich = PhienLamViec.mucDichHienTai
+                                )
+                                ttsManager.speak(answer)
+                                Log.d(TAG, "🤖 Gemini trả lời: $answer")
+                            }
+                        } else {
+                            // Chưa mở app này → nhận diện mục đích và mở app
+                            val mucDichPhuHop = dichVuPhuHop.mucDich.find { md ->
+                                md.tuKhoaGiongNoi.any { clean.contains(it) }
+                            }
+                            val tenMucDich = mucDichPhuHop?.id ?: "chung"
+                            PhienLamViec.mucDichHienTai = tenMucDich
+                            Log.d(TAG, "🎯 Đã gán mục đích: $tenMucDich (${mucDichPhuHop?.tenGoi})")
+
+                            ttsManager.speak(dichVuPhuHop.cauPhanHoiKhiMo)
+                            val intent = packageManager
+                                .getLaunchIntentForPackage(dichVuPhuHop.tenPackage)
+                            if (intent != null) {
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                startActivity(intent)
+                                Log.d(TAG, "🚀 Đã mở ứng dụng ${dichVuPhuHop.tenGoi}")
+                            } else {
+                                Log.w(TAG, "⚠️ Không tìm thấy app: ${dichVuPhuHop.tenPackage}")
+                            }
+                        }
+                    } else {
+                        // Không phải lệnh mở app → là câu hỏi → gửi Gemini trả lời
+                        ttsManager.speak("Ông bà đợi cháu một lát nhé.")
+                        serviceScope.launch {
+                            val answer = geminiHelper.askAssistant(
+                                screenText = currentTextContent,
+                                userQuestion = sentence
+                            )
+                            ttsManager.speak(answer)
+                            Log.d(TAG, "🤖 Gemini trả lời: $answer")
+                        }
                     }
                 },
                 onErrorMsg = { error ->
@@ -236,8 +290,9 @@ class ScreenReaderService : AccessibilityService() {
 
         if (buocHienTai == null) {
             // Không có bước nào trong JSON khớp -> nhờ AI sinh hướng dẫn tạm thời,
-            // dựa trên đúng mục đích (Goal) người dùng đã nói lúc đầu.
-            xuLyManHinhChuaBietBangAI(dichVu.tenGoi, allText)
+            // dựa trên cấu trúc Semantic UI Tree và bộ nhớ đệm Cache.
+            val semanticTree = collectSemanticUITree(rootNode)
+            xuLyManHinhChuaBietBangAI(dichVu.tenGoi, semanticTree.ifEmpty { allText })
             return
         }
 
@@ -286,6 +341,20 @@ class ScreenReaderService : AccessibilityService() {
         floatingView = null
     }
 
+    /**
+     * Làm sạch text đọc từ màn hình trước khi gửi AI:
+     * - Xoá khoảng trắng thừa (nhiều dấu cách liên tiếp → 1 dấu cách)
+     * - Bỏ các từ trùng lặp liên tiếp (VD: "Chọn Chọn Chọn" → "Chọn")
+     * - Giới hạn độ dài để tiết kiệm token
+     */
+    private fun lamSachText(text: String, maxLength: Int = 600): String {
+        return text
+            .replace(Regex("\\s+"), " ")       // Nhiều khoảng trắng → 1 khoảng trắng
+            .replace(Regex("(\\S+)(\\s\\1)+"), "$1") // Bỏ từ trùng liên tiếp
+            .trim()
+            .take(maxLength)
+    }
+
     private fun collectAllText(node: AccessibilityNodeInfo): String {
         val sb = StringBuilder()
         node.text?.let { sb.append(it).append(" ") }
@@ -298,37 +367,101 @@ class ScreenReaderService : AccessibilityService() {
         return sb.toString()
     }
 
-    private fun xuLyManHinhChuaBietBangAI(tenDichVu: String, allText: String) {
-        // Tránh gọi AI liên tục nếu vẫn đang ở đúng màn hình chưa biết đó
-        if (allText == manHinhDangHoiAI) return
-        manHinhDangHoiAI = allText
+    /**
+     * Trích xuất cấu trúc giao diện theo ngữ nghĩa (Semantic UI Tree):
+     * Phân loại Nút bấm (Clickable), Ô nhập (Editable) và Văn bản hiển thị.
+     */
+    private fun collectSemanticUITree(node: AccessibilityNodeInfo): String {
+        val buttons = mutableListOf<String>()
+        val inputs = mutableListOf<String>()
+        val texts = mutableListOf<String>()
 
-        val mucDich = com.example.chauoi.dichVu.PhienLamViec.mucDichHienTai
-            ?: "chưa rõ mục đích cụ thể"
+        fun traverse(n: AccessibilityNodeInfo) {
+            val nodeText = (n.text ?: n.contentDescription ?: "").toString().trim()
+            val className = (n.className ?: "").toString()
+
+            if (nodeText.isNotEmpty() && nodeText.length < 50) {
+                if (n.isClickable || className.contains("Button", ignoreCase = true)) {
+                    if (!buttons.contains(nodeText)) buttons.add(nodeText)
+                } else if (n.isEditable || className.contains("EditText", ignoreCase = true)) {
+                    if (!inputs.contains(nodeText)) inputs.add(nodeText)
+                } else {
+                    if (!texts.contains(nodeText)) texts.add(nodeText)
+                }
+            }
+
+            for (i in 0 until n.childCount) {
+                val child = n.getChild(i) ?: continue
+                traverse(child)
+                child.recycle()
+            }
+        }
+
+        traverse(node)
+
+        val sb = StringBuilder()
+        if (buttons.isNotEmpty()) {
+            sb.append("[Nút bấm]: ").append(buttons.take(6).joinToString(", ")).append("\n")
+        }
+        if (inputs.isNotEmpty()) {
+            sb.append("[Ô nhập]: ").append(inputs.take(4).joinToString(", ")).append("\n")
+        }
+        if (texts.isNotEmpty()) {
+            sb.append("[Thông tin]: ").append(texts.take(8).joinToString(", "))
+        }
+
+        return sb.toString().trim()
+    }
+
+    private fun xuLyManHinhChuaBietBangAI(tenDichVu: String, semanticTree: String) {
+        val screenHash = (tenDichVu + ":" + semanticTree).hashCode()
+
+        // 1. Kiểm tra Cache phản hồi trước khi gọi AI
+        val cachedResponse = screenResponseCache.get(screenHash)
+        if (cachedResponse != null) {
+            Log.d(TAG, "⚡ [CACHE HIT] Đọc từ Cache cho màn hình $tenDichVu (Hash: $screenHash)")
+            ttsManager.speak(cachedResponse)
+            manHinhDangHoiAI = semanticTree
+            return
+        }
+
+        // 2. Tránh gọi AI trùng lặp
+        if (semanticTree == manHinhDangHoiAI) return
+        if (dangHoiAI) {
+            Log.d(TAG, "⏳ Đang chờ AI phản hồi, bỏ qua màn hình mới")
+            return
+        }
+
+        manHinhDangHoiAI = semanticTree
+        dangHoiAI = true
+
+        val mucDich = PhienLamViec.mucDichHienTai ?: "không rõ"
 
         serviceScope.launch {
-            val prompt = """
-                Bạn đang giúp người cao tuổi thao tác trên ứng dụng $tenDichVu.
-                Mục đích người dùng muốn làm: $mucDich
-                Đây là màn hình MỚI, hệ thống chưa từng gặp trước đây.
-                Nội dung màn hình hiện tại:
-                ${allText.take(1200)}
+            try {
+                // Prompt tối ưu dạng Semantic UI Tree
+                val prompt = """
+                    Ứng dụng: $tenDichVu | Mục tiêu: $mucDich
+                    Cấu trúc màn hình:
+                    $semanticTree
+                """.trimIndent()
 
-                Hãy đưa ra 1 câu hướng dẫn ngắn gọn (dưới 30 chữ), xưng "cháu",
-                gọi người dùng là "ông bà", nói rõ nên bấm vào đâu tiếp theo.
-                Nếu không đủ căn cứ để chắc chắn, hãy khuyên ông bà đọc kỹ màn hình
-                hoặc hỏi lại, đừng đoán bừa.
-            """.trimIndent()
+                val huongDan = geminiHelper.hoiTuDo(prompt)
 
-            val huongDan = geminiHelper.hoiTuDo(prompt)
-            ttsManager.speak(huongDan)
+                // Lưu phản hồi vào Cache nếu phản hồi hợp lệ
+                if (huongDan.isNotEmpty() && !huongDan.contains("quá tải")) {
+                    screenResponseCache.put(screenHash, huongDan)
+                }
 
-            // Ghi log riêng để sau này rà lại và bổ sung thành 1 "buoc" thật vào JSON,
-            // biến hướng dẫn AI-sinh thành hướng dẫn đã kiểm chứng.
-            Log.w(TAG, "🤖 [CẦN RÀ SOÁT - màn hình chưa có trong JSON]\n" +
-                    "Dịch vụ: $tenDichVu | Mục đích: $mucDich\n" +
-                    "Text màn hình: ${allText.take(500)}\n" +
-                    "AI trả lời: $huongDan")
+                ttsManager.speak(huongDan)
+
+                Log.w(TAG, "🤖 [AI HƯỚNG DẪN MÀN HÌNH MỚI]\n" +
+                        "Dịch vụ: $tenDichVu | Mục đích: $mucDich\n" +
+                        "Semantic Tree: $semanticTree\n" +
+                        "AI trả lời: $huongDan")
+            } finally {
+                dangHoiAI = false
+            }
         }
     }
 }
