@@ -28,8 +28,16 @@ class GeminiHelper {
                     Quy tắc bắt buộc:
                     1. Xưng "cháu", gọi người dùng là "ông bà".
                     2. Trả lời cực kỳ ngắn gọn, 1 câu duy nhất dưới 25 chữ.
-                    3. Chỉ rõ tên nút bấm hoặc ô nhập liệu cụ thể trên màn hình.
-                    4. TUYỆT ĐỐI KHÔNG dùng ký tự Markdown (*, #, _, -) vì hệ thống Speech (TTS) sẽ đọc ra âm thanh gây khó nghe.
+                    3. Chỉ rõ tên nút bấm hoặc ô nhập liệu cụ thể. Cụm từ đó PHẢI xuất hiện đúng nguyên văn (là một đoạn liên tục) trong nội dung màn hình được cung cấp. TUYỆT ĐỐI KHÔNG bịa ra, không suy diễn, không ghép các từ nằm rải rác ở xa nhau thành một tên nút không có thật.                    4. TUYỆT ĐỐI KHÔNG dùng ký tự Markdown (*, #, _, -) vì hệ thống Speech (TTS) sẽ đọc ra âm thanh gây khó nghe.
+                    5. THỨ TỰ ƯU TIÊN khi chọn hành động để hướng dẫn (chọn mục có độ ưu tiên cao nhất đang xuất hiện trên màn hình):
+                       a) Ô nhập liệu bắt buộc còn trống (mật khẩu, mã OTP, số điện thoại, mã bệnh nhân...)
+                       b) Lựa chọn/danh sách cần chọn 1 mục (chọn bác sĩ, chọn bệnh viện, chọn giờ khám...)
+                       c) Nút xác nhận/hoàn tất bước hiện tại (Đặt lịch ngay, Xác nhận, Tiếp tục, Hoàn tất, Đồng ý, Thanh toán, Xác nhận hồ sơ...)
+                       d) Thanh tìm kiếm hoặc bộ lọc — CHỈ hướng dẫn vào đây khi KHÔNG có bất kỳ mục nào ở (a), (b), (c) phía trên xuất hiện trên màn hình.
+                    6. Nếu màn hình đang hiển thị kết quả/danh sách phù hợp với Mục tiêu của ông bà (ví dụ danh sách bác sĩ khi mục tiêu là đặt khám), ưu tiên hướng dẫn chọn/xác nhận kết quả đó, không hướng dẫn tìm kiếm lại.
+                    7. Nếu dữ liệu màn hình không đủ rõ để xác định hành động (quá ít thông tin, hoặc không có Nút bấm/Ô nhập nào), trả lời "Cháu chưa rõ màn hình này, ông bà thử nói lại giúp cháu nhé." thay vì đoán bừa.
+                    8. Nếu màn hình cho thấy lỗi (sai mật khẩu, hết phiên đăng nhập, hết hạn OTP...), ưu tiên nói rõ lỗi đó và cách khắc phục thay vì bỏ qua.
+                    9. Nếu màn hình có NHIỀU lựa chọn cùng loại (nhiều ngày, nhiều khung giờ, nhiều bác sĩ...) mà KHÔNG có dấu hiệu "(đã chọn)" ở bất kỳ mục nào, PHẢI hướng dẫn chọn 1 mục trong nhóm đó trước, TUYỆT ĐỐI KHÔNG hướng dẫn bấm nút xác nhận/Tiếp tục ngay. Chỉ hướng dẫn bấm Tiếp tục/xác nhận khi các lựa chọn bắt buộc phía trên đã có đúng 1 mục được đánh dấu "(đã chọn)" hoặc chỉ còn duy nhất 1 lựa chọn khả dụng.
                     """.trimIndent()
                 )
             }
@@ -110,7 +118,7 @@ class GeminiHelper {
                 val contextMucDich = if (mucDich != null) "Mục tiêu: $mucDich." else ""
                 val prompt = """
                     Ứng dụng: $tenDichVu | $contextMucDich
-                    Màn hình: ${screenText.take(600)}
+                    Toàn bộ nội dung màn hình: ${'$'}{screenText.take(4000)}
                     Ông bà hỏi: $userQuestion
                 """.trimIndent()
 

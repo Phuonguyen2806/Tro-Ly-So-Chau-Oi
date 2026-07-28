@@ -35,6 +35,9 @@ object DichVuLoader {
             tenPackage = obj.getString("tenPackage"),
             tuKhoaGiongNoi = obj.getJSONArray("tuKhoaGiongNoi").toStringList(),
             cauPhanHoiKhiMo = obj.getString("cauPhanHoiKhiMo"),
+            // Đọc 2 trường mới, có giá trị mặc định phòng khi quên ghi trong JSON
+            cauChaoMung = obj.optString("cauChaoMung", "Ông bà đã vào ứng dụng. Hãy bấm nút hình con mắt để cháu hướng dẫn nhé."),
+            cauNhanChuyenManHinh = obj.optString("cauNhanChuyenManHinh", "Ông bà tiếp tục nhấn vào con mắt để cháu quét màn hình nhé."),
             mucDich = if (obj.has("mucDich"))
                 obj.getJSONArray("mucDich").let { mang ->
                     (0 until mang.length()).map { i -> parseMucDich(mang.getJSONObject(i)) }
