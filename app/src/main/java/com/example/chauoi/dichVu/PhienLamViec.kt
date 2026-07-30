@@ -1,10 +1,11 @@
 package com.example.chauoi.dichVu
 
 /**
- * Lưu mục đích (Goal) người dùng đang thực hiện trong phiên hiện tại.
- * Không lưu SQLite - chỉ tồn tại trong bộ nhớ khi app đang chạy,
- * mất đi khi tắt app - đúng bản chất "session" tạm thời.
+ * Lưu mục đích (Goal) và ngữ cảnh người dùng đang thực hiện trong phiên hiện tại.
  */
 object PhienLamViec {
     var mucDichHienTai: String? = null
+
+    // Biến lưu câu hỏi khi ông bà bấm mic, chờ ông bà bấm con mắt để gửi kèm màn hình
+    var cauHoiGhiAmTamThoi: String? = null
 }
