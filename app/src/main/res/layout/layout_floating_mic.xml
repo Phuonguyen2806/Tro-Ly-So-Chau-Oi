@@ -1,26 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/floating_layout"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
     android:padding="8dp">
 
-    <!-- CardView chứa nút Micro nổi tròn -->
+    <!-- Nút 1 (TRÊN): Chạm để hỏi bằng giọng nói (Hành động chính) -->
     <androidx.cardview.widget.CardView
-        android:id="@+id/cardMic"
+        android:id="@+id/cardHoi"
         android:layout_width="60dp"
         android:layout_height="60dp"
-        app:cardBackgroundColor="#FF7043"
+        app:cardBackgroundColor="#1976D2"
         app:cardCornerRadius="30dp"
         app:cardElevation="8dp">
 
         <ImageView
-            android:id="@+id/imgMic"
+            android:id="@+id/imgHoi"
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_gravity="center"
+            android:contentDescription="Hỏi trợ lý bằng giọng nói"
             android:src="@android:drawable/ic_btn_speak_now"
             app:tint="#FFFFFF" />
     </androidx.cardview.widget.CardView>
-</FrameLayout>
+
+    <!-- Khoảng cách an toàn giữa 2 nút (Tăng lên 16dp để tránh bấm nhầm) -->
+    <View
+        android:layout_width="1dp"
+        android:layout_height="16dp" />
+
+    <!-- Nút 2 (DƯỚI): Bật quét màn hình 1 lần (Hành động phụ) -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardTheoDoi"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        app:cardBackgroundColor="#9E9E9E"
+        app:cardCornerRadius="30dp"
+        app:cardElevation="8dp">
+
+        <ImageView
+            android:id="@+id/imgTheoDoi"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:contentDescription="Quét và đọc màn hình hiện tại"
+            android:src="@android:drawable/ic_menu_view"
+            app:tint="#FFFFFF" />
+    </androidx.cardview.widget.CardView>
+
+</LinearLayout>

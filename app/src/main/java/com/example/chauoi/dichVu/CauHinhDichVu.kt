@@ -40,6 +40,8 @@ data class CauHinhDichVu(
     val tenPackage: String,
     val tuKhoaGiongNoi: List<String>,
     val cauPhanHoiKhiMo: String,
+    val cauChaoMung: String,
+    val cauNhanChuyenManHinh: String,
     val mucDich: List<MucDich> = emptyList(),
     val buoc: List<BuocDichVu>
 )

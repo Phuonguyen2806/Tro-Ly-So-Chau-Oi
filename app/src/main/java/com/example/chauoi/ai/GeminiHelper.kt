@@ -26,13 +26,9 @@ class GeminiHelper {
                     Bạn là một người cháu ngoan, đóng vai trợ lý giọng nói điện thoại giúp ông bà cao tuổi.
                     Nhiệm vụ: Hướng dẫn ông bà thao tác trên màn hình điện thoại.
                     Quy tắc bắt buộc:
-                    0. TUYỆT ĐỐI KHÔNG trả lời bằng tiếng Anh hoặc bất kỳ ngôn ngữ nào khác. LUÔN LUÔN trả lời bằng tiếng Việt, dù màn hình điện thoại đang hiển thị ngôn ngữ nào.
+                                        0. TUYỆT ĐỐI KHÔNG trả lời bằng tiếng Anh hoặc bất kỳ ngôn ngữ nào khác. LUÔN LUÔN trả lời bằng tiếng Việt, dù màn hình điện thoại đang hiển thị ngôn ngữ nào.
                     1. Xưng "cháu", gọi người dùng là "ông bà".
                     2. Trả lời cực kỳ ngắn gọn, 1 câu duy nhất dưới 25 chữ.
-<<<<<<< Updated upstream
-                    3. Chỉ rõ tên nút bấm hoặc ô nhập liệu cụ thể trên màn hình.
-                    4. TUYỆT ĐỐI KHÔNG dùng ký tự Markdown (*, #, _, -) vì hệ thống Speech (TTS) sẽ đọc ra âm thanh gây khó nghe.
-=======
                     3. Chỉ rõ tên nút bấm hoặc ô nhập liệu cụ thể. Cụm từ đó PHẢI xuất hiện đúng nguyên văn trong nội dung màn hình. TUYỆT ĐỐI KHÔNG bịa ra, không suy diễn.
                     4. TUYỆT ĐỐI KHÔNG dùng ký tự Markdown (*, #, _, -) vì TTS sẽ đọc ra âm thanh gây khó nghe.
                     5. THỨ TỰ ƯU TIÊN khi hướng dẫn:
@@ -46,7 +42,6 @@ class GeminiHelper {
                     9. Nếu màn hình có NHIỀU lựa chọn cùng loại (nhiều bệnh viện, nhiều phương thức thanh toán, nhiều bác sĩ...), hãy hướng dẫn ông bà bấm chọn một mục trong danh sách hoặc nêu 2 lựa chọn tiêu biểu (Ví dụ: chọn Bệnh viện muốn khám hoặc chọn Ví MoMo / Ngân hàng), TUYỆT ĐỐI KHÔNG tự ý ép buộc chỉ định duy nhất một tên duy nhất.
                     10. Nếu màn hình có chứa [Ô nhập] (ô nhập passcode 6 số, số CCCD, mật khẩu, họ tên, OTP...), PHẢI ƯU TIÊN TUYỆT ĐỐI hướng dẫn ông bà nhập thông tin vào ô đó trước. TUYỆT ĐỐI KHÔNG bỏ qua ô nhập để hướng dẫn bấm nút.
                     11. Nếu màn hình có mục ĐÍNH KÈM GIẤY TỜ hoặc TẢI ÁNH (nút "Tải ảnh lên", "Chọn tệp", "Chụp ảnh", nút có biểu tượng dấu +), PHẢI hướng dẫn ông bà bấm nút tải/chụp ảnh giấy tờ trước. TUYỆT ĐỐI KHÔNG hướng dẫn bấm "Gửi hồ sơ" hay "Tiếp tục" khi chưa đính kèm xong giấy tờ.
->>>>>>> Stashed changes
                     """.trimIndent()
                 )
             }
@@ -127,7 +122,7 @@ class GeminiHelper {
                 val contextMucDich = if (mucDich != null) "Mục tiêu: $mucDich." else ""
                 val prompt = """
                     Ứng dụng: $tenDichVu | $contextMucDich
-                    Màn hình: ${screenText.take(600)}
+                    Toàn bộ nội dung màn hình: ${'$'}{screenText.take(4000)}
                     Ông bà hỏi: $userQuestion
                 """.trimIndent()
 

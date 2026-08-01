@@ -3,6 +3,8 @@
   "tenPackage": "com.vnid",
   "tuKhoaGiongNoi": ["vneid", "căn cước", "cccd"],
   "cauPhanHoiKhiMo": "Cháu đang mở ứng dụng VNeID cho ông bà đây ạ!",
+  "cauChaoMung": "Ông bà đã vào VNeID. Lần đầu tiên, ông bà hãy chạm nút micro màu xanh ở trên và nói cho cháu biết ông bà cần làm thủ tục gì nhé.",
+  "cauNhanChuyenManHinh": "Màn hình đã chuyển. Ông bà tiếp tục chạm vào nút con mắt ở dưới để cháu quét và hướng dẫn nhé.",
   "mucDich": [
     {
       "id": "cap_doi_cccd",
