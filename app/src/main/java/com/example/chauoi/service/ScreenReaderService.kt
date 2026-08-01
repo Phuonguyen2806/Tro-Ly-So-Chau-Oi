@@ -243,9 +243,76 @@ class ScreenReaderService : AccessibilityService() {
         }
     }
 
+<<<<<<< Updated upstream
     private fun resetMicButtonUi() {
         val cardMic = floatingView?.findViewById<CardView>(R.id.cardMic)
         cardMic?.setCardBackgroundColor(0xFFFF7043.toInt())
+=======
+    private fun resetNutHoiUi() {
+        val cardHoi = floatingView?.findViewById<CardView>(R.id.cardHoi)
+        cardHoi?.setCardBackgroundColor(MAU_HOI_RANH)
+    }
+
+    // =====================================================================
+    // LOGIC QUÉT MÀN HÌNH MỚI (1 LẦN VÀ TẮT)
+    // =====================================================================
+
+    private fun kichHoatQuetManHinh() {
+        if (dangQuetManHinh) return
+        dangQuetManHinh = true
+        rungPhanHoi()
+
+        val cardTheoDoi = floatingView?.findViewById<CardView>(R.id.cardTheoDoi)
+        cardTheoDoi?.setCardBackgroundColor(MAU_THEO_DOI_BAT)
+
+        if (PhienLamViec.cauHoiGhiAmTamThoi != null) {
+            ttsManager.speak("Cháu đang xem màn hình để trả lời, ông bà đợi một lát nhé.")
+        } else {
+            ttsManager.speak("Cháu đang xem màn hình, ông bà đợi một lát nhé.")
+        }
+
+        thucHienQuetManHinhMotLan()
+    }
+
+    private fun tatNutTheoDoi() {
+        val cardTheoDoi = floatingView?.findViewById<CardView>(R.id.cardTheoDoi)
+        cardTheoDoi?.setCardBackgroundColor(MAU_THEO_DOI_TAT)
+        dangQuetManHinh = false
+    }
+
+    private fun thucHienQuetManHinhMotLan() {
+        val rootNode = rootInActiveWindow
+        if (rootNode == null) {
+            ttsManager.speak("Cháu không thấy màn hình nào cả.")
+            tatNutTheoDoi()
+            return
+        }
+
+        val packageName = rootNode.packageName?.toString() ?: ""
+        currentPackageName = packageName
+
+        val dichVu = dsDichVu.find { it.tenPackage == packageName }
+        if (dichVu == null) {
+            ttsManager.speak("Ứng dụng này chưa được cháu hỗ trợ ạ.")
+            rootNode.recycle()
+            tatNutTheoDoi()
+            return
+        }
+
+        val semanticTreeGoc = collectSemanticUITree(rootNode)
+        rootNode.recycle()
+        if (semanticTreeGoc.isBlank()) {
+            ttsManager.speak("Màn hình này trống, cháu không thấy thông tin gì ạ.")
+            tatNutTheoDoi()
+            return
+        }
+
+        val semanticTree = lamSachText(semanticTreeGoc, maxLength = 2000)
+        currentTextContent = semanticTree
+
+        // 🚀 CHUYỂN LUỒNG 100% SANG AI: Bỏ qua JSON, gửi thẳng cho Gemini AI quét tự do
+        xuLyManHinhChuaBietBangAI(dichVu.tenGoi, semanticTree)
+>>>>>>> Stashed changes
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -267,6 +334,7 @@ class ScreenReaderService : AccessibilityService() {
         val dichVu = dsDichVu.find { it.tenPackage == packageName } ?: return
         val rootNode = rootInActiveWindow ?: return
 
+<<<<<<< Updated upstream
         // Kiểm tra lại: nội dung đọc được có THẬT SỰ thuộc đúng app đang theo dõi không.
         // Tránh trường hợp giữa lúc chờ (DELAY_MS), màn hình bị 1 popup hệ thống
         // (gợi ý mật khẩu Google, thông báo...) hoặc launcher đè lên, khiến app
@@ -275,6 +343,14 @@ class ScreenReaderService : AccessibilityService() {
         if (rootPackageName != dichVu.tenPackage) {
             rootNode.recycle()
             Log.d(TAG, "⏭ Bỏ qua vì cửa sổ hiện tại thuộc package khác: $rootPackageName")
+=======
+        val cachedResponse = screenResponseCache.get(screenHash)
+        if (cachedResponse != null) {
+            Log.d(TAG, "⚡ [CACHE HIT] Lấy câu hướng dẫn từ RAM Cache")
+            ttsManager.speak(cachedResponse)
+            PhienLamViec.cauHoiGhiAmTamThoi = null
+            tatNutTheoDoi()
+>>>>>>> Stashed changes
             return
         }
 
@@ -299,10 +375,29 @@ class ScreenReaderService : AccessibilityService() {
         val khoaXuLyDacBiet = "$packageName:${buocHienTai.id}"
         val dong = if (buocHienTai.xuLyDacBiet) xuLyDacBietMap[khoaXuLyDacBiet]?.invoke(allText) else null
 
+<<<<<<< Updated upstream
         if (buocHienTai.id != buocTruocDo) {
             buocTruocDo = buocHienTai.id
             val huongDan = dong ?: buocHienTai.layHuongDan(com.example.chauoi.dichVu.PhienLamViec.mucDichHienTai)
             lastDynamicHash = dong?.hashCode() ?: 0
+=======
+        serviceScope.launch {
+            try {
+                // Ghép nối câu hỏi nếu người dùng vừa mới bấm Mic hỏi trước đó
+                val contextCauHoi = if (cauHoi != null) "\nÔng bà vừa hỏi: $cauHoi" else ""
+                val prompt = """
+                    Ứng dụng: $tenDichVu | Mục tiêu: $mucDich $contextCauHoi
+                    Toàn bộ nội dung màn hình (gồm cả nút bấm, ô nhập, thông tin):
+                    $noiDungManHinh
+                """.trimIndent()
+
+                val huongDan = geminiHelper.hoiTuDo(prompt)
+                Log.d(TAG, "🤖 [AI HƯỚNG DẪN 100%]: $huongDan")
+
+                if (huongDan.isNotEmpty() && !huongDan.contains("quá tải")) {
+                    screenResponseCache.put(screenHash, huongDan)
+                }
+>>>>>>> Stashed changes
 
             if (huongDan.isNotEmpty()) {
                 ttsManager.speak(huongDan)
@@ -353,6 +448,38 @@ class ScreenReaderService : AccessibilityService() {
             .replace(Regex("(\\S+)(\\s\\1)+"), "$1") // Bỏ từ trùng liên tiếp
             .trim()
             .take(maxLength)
+    }
+
+    private fun collectSemanticUITree(node: AccessibilityNodeInfo): String {
+        val nutBam = mutableListOf<String>()
+        val oNhap = mutableListOf<String>()
+        val thongTin = mutableListOf<String>()
+
+        fun traverse(n: AccessibilityNodeInfo) {
+            val text = (n.text ?: n.hintText ?: n.contentDescription ?: "").toString().trim()
+            if (n.isEditable) {
+                val tenONhap = text.ifEmpty { "Ô nhập liệu" }
+                if (!oNhap.contains(tenONhap)) oNhap.add(tenONhap)
+            } else if (text.isNotEmpty()) {
+                if (n.isClickable) {
+                    if (!nutBam.contains(text)) nutBam.add(text)
+                } else {
+                    if (!thongTin.contains(text)) thongTin.add(text)
+                }
+            }
+            for (i in 0 until n.childCount) {
+                val child = n.getChild(i) ?: continue
+                traverse(child)
+                child.recycle()
+            }
+        }
+        traverse(node)
+
+        val sb = StringBuilder()
+        if (nutBam.isNotEmpty()) sb.append("[Nút bấm]: ").append(nutBam.joinToString(", ")).append("\n")
+        if (oNhap.isNotEmpty()) sb.append("[Ô nhập]: ").append(oNhap.joinToString(", ")).append("\n")
+        if (thongTin.isNotEmpty()) sb.append("[Thông tin]: ").append(thongTin.joinToString(", "))
+        return sb.toString()
     }
 
     private fun collectAllText(node: AccessibilityNodeInfo): String {
