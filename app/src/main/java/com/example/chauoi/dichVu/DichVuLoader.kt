@@ -8,7 +8,7 @@ import org.json.JSONObject
 object DichVuLoader {
     private const val TAG = "DichVuLoader"
 
-    /** Đọc toàn bộ file .json trong assets/services/ và nạp thành danh sách CauHinhDichVu */
+    /** Nạp danh sách CauHinhDichVu (Tự động nạp danh sách mặc định trong Kotlin code nếu không có JSON) */
     fun taiTatCa(context: Context): List<CauHinhDichVu> {
         val ketQua = mutableListOf<CauHinhDichVu>()
         try {
@@ -24,9 +24,47 @@ object DichVuLoader {
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Không thể liệt kê thư mục services/", e)
+            Log.e(TAG, "❌ Không tìm thấy thư mục assets/services/", e)
         }
+
+        if (ketQua.isEmpty()) {
+            Log.d(TAG, "🚀 Nạp danh sách ứng dụng mặc định từ Kotlin code (Không dùng JSON)")
+            ketQua.addAll(layDanhSachMacDinh())
+        }
+
         return ketQua
+    }
+
+    private fun layDanhSachMacDinh(): List<CauHinhDichVu> {
+        return listOf(
+            CauHinhDichVu(
+                tenGoi = "YouMed",
+                tenPackage = "com.youmed.info",
+                tuKhoaGiongNoi = listOf("đặt lịch", "khám", "youmed", "cháu ơi"),
+                cauPhanHoiKhiMo = "Cháu đang mở ứng dụng đặt lịch khám YouMed cho ông bà đây ạ!",
+                cauChaoMung = "Ông bà đã vào YouMed. Lần đầu tiên, ông bà hãy chạm nút micro màu xanh ở trên và nói cho cháu biết ông bà muốn làm gì nhé.",
+                cauNhanChuyenManHinh = "Màn hình đã chuyển. Ông bà tiếp tục chạm vào nút con mắt ở dưới để cháu hướng dẫn bước tiếp theo nhé.",
+                buoc = emptyList()
+            ),
+            CauHinhDichVu(
+                tenGoi = "VNeID",
+                tenPackage = "com.vnid",
+                tuKhoaGiongNoi = listOf("vneid", "căn cước", "cccd"),
+                cauPhanHoiKhiMo = "Cháu đang mở ứng dụng VNeID cho ông bà đây ạ!",
+                cauChaoMung = "Ông bà đã vào VNeID. Lần đầu tiên, ông bà hãy chạm nút micro màu xanh ở trên và nói cho cháu biết ông bà cần làm thủ tục gì nhé.",
+                cauNhanChuyenManHinh = "Màn hình đã chuyển. Ông bà tiếp tục chạm vào nút con mắt ở dưới để cháu quét và hướng dẫn nhé.",
+                buoc = emptyList()
+            ),
+            CauHinhDichVu(
+                tenGoi = "VssID",
+                tenPackage = "com.bhxhapp",
+                tuKhoaGiongNoi = listOf("vssid", "bảo hiểm"),
+                cauPhanHoiKhiMo = "Cháu đang mở ứng dụng VssID cho ông bà đây ạ!",
+                cauChaoMung = "Ông bà đã vào ứng dụng Bảo hiểm. Lần đầu tiên, ông bà hãy chạm nút micro màu xanh ở trên và nói mục đích cho cháu biết nhé.",
+                cauNhanChuyenManHinh = "Màn hình đã chuyển. Ông bà tiếp tục chạm vào nút con mắt ở dưới để cháu hướng dẫn bước tiếp theo nhé.",
+                buoc = emptyList()
+            )
+        )
     }
 
     private fun parseCauHinh(obj: JSONObject): CauHinhDichVu {
