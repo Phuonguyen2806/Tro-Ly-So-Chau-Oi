@@ -68,13 +68,6 @@ class ScreenReaderService : AccessibilityService() {
     private var currentTextContent: String = ""
     private var currentPackageName: String = ""
     private var lastEventTime = 0L
-
-    private val xuLyDacBietMap: Map<String, (String) -> String> = mapOf(
-        "com.youmed.info:buoc9_xac_nhan_thanh_toan" to { _ ->
-            "Ông bà hãy đọc kỹ thông tin và xác nhận thanh toán."
-        }
-    )
-
     override fun onServiceConnected() {
         super.onServiceConnected()
         val info = AccessibilityServiceInfo().apply {
