@@ -1,12 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Base Colors -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="bg_cream">#FDF6F0</color>
-    <color name="text_dark">#3E2723</color>
-    <color name="text_body">#5D4037</color>
-    <color name="text_muted">#8D6E63</color>
-    <color name="accent_mic">#FF7043</color>
-    <color name="service_youmed">#43A047</color>
-    <color name="service_vneid">#1E88E5</color>
+    
+    <!-- Exact Mockup Color Palette -->
+    <color name="bg_app">#F0F6FC</color>
+    <color name="surface_card">#FFFFFF</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#1A202C</color>
+    <color name="text_secondary">#555555</color>
+    <color name="text_muted">#78909C</color>
+    
+    <!-- Header Colors -->
+    <color name="text_header_title">#1B5E20</color>
+    
+    <!-- Hero Mic Colors -->
+    <color name="accent_mic_idle">#FF6D3B</color>
+    <color name="accent_mic_active">#4CAF50</color>
+    <color name="accent_mic_error">#E53935</color>
+    
+    <!-- Status Pill Colors -->
+    <color name="status_ready_bg">#E1F5FE</color>
+    <color name="status_ready_text">#0277BD</color>
+    
+    <color name="status_listening_bg">#E8F5E9</color>
+    <color name="status_listening_text">#1B5E20</color>
+    
+    <color name="status_error_bg">#FFEBEE</color>
+    <color name="status_error_text">#C62828</color>
+    
+    <!-- Suggestion Box Colors -->
+    <color name="suggestion_card_bg">#E8F4FD</color>
+    <color name="suggestion_title">#0D47A1</color>
+    
+    <!-- Service Specific High-Contrast Colors -->
+    <color name="service_title_green">#1B5E20</color>
+    <color name="service_vssid_primary">#00796B</color>
+    <color name="service_vneid_primary">#1565C0</color>
+    <color name="service_youmed_primary">#2E7D32</color>
+
+    <color name="service_vssid_badge_bg">#E8F5E9</color>
+    <color name="service_vneid_badge_bg">#E8EAF6</color>
+    <color name="service_youmed_badge_bg">#E8F5E9</color>
+
+    <!-- Compatibility aliases -->
+    <color name="bg_cream">#F0F6FC</color>
+    <color name="text_dark">#1A202C</color>
+    <color name="text_body">#555555</color>
+    <color name="accent_mic">#FF6D3B</color>
+    <color name="service_youmed">#2E7D32</color>
+    <color name="service_vneid">#1565C0</color>
 </resources>

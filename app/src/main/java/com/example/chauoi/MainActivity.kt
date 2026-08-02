@@ -3,7 +3,7 @@ package com.example.chauoi
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -13,11 +13,11 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.chauoi.tts.SpeechRecognitionManager
-import com.example.chauoi.tts.TextToSpeechManager
 import com.example.chauoi.dichVu.CauHinhDichVu
 import com.example.chauoi.dichVu.DichVuLoader
 import com.example.chauoi.dichVu.moUngDung
+import com.example.chauoi.tts.SpeechRecognitionManager
+import com.example.chauoi.tts.TextToSpeechManager
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,11 +31,13 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var tvStatus: TextView
     private lateinit var btnMicro: CardView
-    private lateinit var btnOpenYouMed: Button
-    private lateinit var btnOpenVNeID: Button
-    private lateinit var btnOpenVssID: Button
+    private lateinit var frameMicWrapper: FrameLayout
 
-    // Danh sách dịch vụ nạp từ assets/services/*.json thay vì khai báo cứng danh sách class
+    private lateinit var cardYouMed: CardView
+    private lateinit var cardVNeID: CardView
+    private lateinit var cardVssID: CardView
+
+    // Danh sách dịch vụ nạp từ assets/services/*.json
     private lateinit var dsDichVu: List<CauHinhDichVu>
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,31 +55,56 @@ class MainActivity : AppCompatActivity() {
 
         tvStatus = findViewById(R.id.tvStatus)
         btnMicro = findViewById(R.id.btnMicro)
-        btnOpenYouMed = findViewById(R.id.btnOpenYouMed)
-        btnOpenVNeID = findViewById(R.id.btnOpenVNeID)
-        btnOpenVssID = findViewById(R.id.btnOpenVssID)
+        frameMicWrapper = findViewById(R.id.frameMicWrapper)
+
+        cardYouMed = findViewById(R.id.cardYouMed)
+        cardVNeID = findViewById(R.id.cardVNeID)
+        cardVssID = findViewById(R.id.cardVssID)
         ttsManager = TextToSpeechManager(this)
+
         checkRecordAudioPermission()
         initSpeechRecognizer()
 
         btnMicro.setOnClickListener {
-            tvStatus.text = "Đang lắng nghe..."
-            btnMicro.setCardBackgroundColor(android.graphics.Color.parseColor("#4CAF50"))
+            setListeningStateUI(true)
             speechManager.startListening()
         }
 
-        // Tìm dịch vụ theo tenPackage (giữ nguyên hành vi 2 nút cũ);
-        // nếu thêm dịch vụ mới có nút riêng, chỉ cần thêm 1 dòng find tương tự.
-        btnOpenYouMed.setOnClickListener {
+        // Gán sự kiện chạm trực tiếp các thẻ dịch vụ
+        cardYouMed.setOnClickListener {
             dsDichVu.find { it.tenPackage == "com.youmed.info" }?.moUngDung(this)
         }
 
-        btnOpenVNeID.setOnClickListener {
+        cardVNeID.setOnClickListener {
             dsDichVu.find { it.tenPackage == "com.vnid" }?.moUngDung(this)
         }
-        btnOpenVssID.setOnClickListener {
+
+        cardVssID.setOnClickListener {
             dsDichVu.find { it.tenPackage == "com.bhxhapp" }?.moUngDung(this)
         }
+    }
+
+    private fun setListeningStateUI(isListening: Boolean) {
+        if (isListening) {
+            // ĐANG NGHE = MÀU XANH LÁ
+            btnMicro.setCardBackgroundColor(ContextCompat.getColor(this, R.color.accent_mic_active))
+            tvStatus.text = "🔴 Đang lắng nghe... Xin ông bà hãy nói"
+            tvStatus.setBackgroundResource(R.drawable.bg_status_pill_listening)
+            tvStatus.setTextColor(ContextCompat.getColor(this, R.color.status_listening_text))
+        } else {
+            // SẴN SÀNG = MÀU CAM NỔI BẬT
+            btnMicro.setCardBackgroundColor(ContextCompat.getColor(this, R.color.accent_mic_idle))
+            tvStatus.text = "🎙️ Sẵn sàng lắng nghe ông bà"
+            tvStatus.setBackgroundResource(R.drawable.bg_status_pill_ready)
+            tvStatus.setTextColor(ContextCompat.getColor(this, R.color.status_ready_text))
+        }
+    }
+
+    private fun setErrorStateUI(errorMessage: String) {
+        btnMicro.setCardBackgroundColor(ContextCompat.getColor(this, R.color.accent_mic_error))
+        tvStatus.text = errorMessage
+        tvStatus.setBackgroundResource(R.drawable.bg_status_pill_error)
+        tvStatus.setTextColor(ContextCompat.getColor(this, R.color.status_error_text))
     }
 
     private fun checkRecordAudioPermission() {
@@ -109,29 +136,28 @@ class MainActivity : AppCompatActivity() {
         speechManager = SpeechRecognitionManager(
             context = this,
             onResult = { sentence ->
-                btnMicro.setCardBackgroundColor(android.graphics.Color.parseColor("#FF7043"))
-                tvStatus.text = "Bạn vừa nói: \"$sentence\""
                 val cleanSentence = sentence.lowercase()
 
                 val dichVuPhuHop = dsDichVu.map { dichVu ->
-                    // Đếm số từ khóa trong câu nói khớp với danh sách từ khóa của dịch vụ
                     val score = dichVu.tuKhoaGiongNoi.count { cleanSentence.contains(it) }
                     dichVu to score
-                }.filter { it.second > 0 } // Chỉ lấy những dịch vụ có điểm > 0
-                    .maxByOrNull { it.second }?.first // Chọn dịch vụ có nhiều từ khóa khớp nhất
+                }.filter { it.second > 0 }
+                    .maxByOrNull { it.second }?.first
 
                 if (dichVuPhuHop != null) {
+                    setListeningStateUI(false)
+                    tvStatus.text = "💬 Ông bà vừa nói: \"$sentence\""
                     ttsManager.speak(dichVuPhuHop.cauPhanHoiKhiMo)
                     btnMicro.postDelayed({
                         dichVuPhuHop.moUngDung(this@MainActivity)
                     }, 3500)
                 } else {
-                    ttsManager.speak("Cháu chưa nghe rõ, ông bà vui lòng nói: đặt lịch khám, hoặc: làm lại căn cước.")
+                    setErrorStateUI("⚠️ Cháu chưa nghe rõ câu: \"$sentence\"\nÔng bà hãy thử nói lại hoặc bấm thẻ dịch vụ bên dưới nhé.")
+                    ttsManager.speak("Cháu chưa nghe rõ, ông bà vui lòng nói lại hoặc chọn trực tiếp thẻ dịch vụ bên dưới nhé.")
                 }
             },
             onErrorMsg = { error ->
-                btnMicro.setCardBackgroundColor(android.graphics.Color.parseColor("#FF7043"))
-                tvStatus.text = "Lỗi: $error"
+                setErrorStateUI("⚠️ Lỗi ghi âm: $error\nÔng bà vui lòng bấm lại nút micro.")
             }
         )
     }

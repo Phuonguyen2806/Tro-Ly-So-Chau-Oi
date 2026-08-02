@@ -44,9 +44,9 @@ class ScreenReaderService : AccessibilityService() {
         private val MAU_THEO_DOI_TAT = 0xFF9E9E9E.toInt()
         private val MAU_THEO_DOI_BAT = 0xFF4CAF50.toInt()
 
-        // Màu cho nút "Hỏi" (nút dưới): chàm = rảnh, đỏ = đang ghi âm.
-        private val MAU_HOI_RANH = 0xFF3949AB.toInt()
-        private val MAU_HOI_DANG_GHI_AM = 0xFFE53935.toInt()
+        // Màu cho nút "Hỏi" (nút dưới): Cam = rảnh, Xanh lá = đang ghi âm (đồng bộ ứng dụng).
+        private val MAU_HOI_RANH = 0xFFFF7043.toInt()
+        private val MAU_HOI_DANG_GHI_AM = 0xFF4CAF50.toInt()
     }
 
     private lateinit var dsDichVu: List<CauHinhDichVu>
@@ -71,7 +71,7 @@ class ScreenReaderService : AccessibilityService() {
 
     private val xuLyDacBietMap: Map<String, (String) -> String> = mapOf(
         "com.youmed.info:buoc9_xac_nhan_thanh_toan" to { _ ->
-            "Bạn hãy đọc kỹ thông tin và xác nhận thanh toán."
+            "Ông bà hãy đọc kỹ thông tin và xác nhận thanh toán."
         }
     )
 
