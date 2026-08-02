@@ -234,14 +234,6 @@ class ScreenReaderService : AccessibilityService() {
         }
     }
 
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-    private fun resetMicButtonUi() {
-        val cardMic = floatingView?.findViewById<CardView>(R.id.cardMic)
-        cardMic?.setCardBackgroundColor(0xFFFF7043.toInt())
-=======
-=======
->>>>>>> origin/main
     private fun resetNutHoiUi() {
         val cardHoi = floatingView?.findViewById<CardView>(R.id.cardHoi)
         cardHoi?.setCardBackgroundColor(MAU_HOI_RANH)
