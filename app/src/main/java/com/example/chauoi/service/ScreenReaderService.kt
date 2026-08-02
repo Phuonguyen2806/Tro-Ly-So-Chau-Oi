@@ -27,6 +27,7 @@ import com.example.chauoi.dichVu.DichVuLoader
 import com.example.chauoi.dichVu.PhienLamViec
 import com.example.chauoi.tts.SpeechRecognitionManager
 import com.example.chauoi.tts.TextToSpeechManager
+import com.example.chauoi.tts.VoiceError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -47,8 +48,12 @@ class ScreenReaderService : AccessibilityService() {
         // Màu cho nút "Hỏi" (nút dưới): Cam = rảnh, Xanh lá = đang ghi âm (đồng bộ ứng dụng).
         private val MAU_HOI_RANH = 0xFFFF7043.toInt()
         private val MAU_HOI_DANG_GHI_AM = 0xFF4CAF50.toInt()
-    }
 
+
+        // Chia sẻ Cache ra ngoài để khi người dùng phàn nàn có thể xóa sạch cache màn hình cũ
+        val screenResponseCache = LruCache<Int, String>(50)
+    }
+    private lateinit var voiceErrorChecker: VoiceError
     private lateinit var dsDichVu: List<CauHinhDichVu>
     private lateinit var ttsManager: TextToSpeechManager
     private var speechManager: SpeechRecognitionManager? = null
@@ -59,8 +64,6 @@ class ScreenReaderService : AccessibilityService() {
     private var dangHoiAI = false
     private var dangQuetManHinh = false // Cờ tránh bấm nút con mắt 2 lần liên tục
 
-    private val screenResponseCache = LruCache<Int, String>(50)
-
     private lateinit var windowManager: WindowManager
     private var floatingView: View? = null
     private var floatingLayoutParams: WindowManager.LayoutParams? = null
@@ -69,11 +72,6 @@ class ScreenReaderService : AccessibilityService() {
     private var currentPackageName: String = ""
     private var lastEventTime = 0L
 
-    private val xuLyDacBietMap: Map<String, (String) -> String> = mapOf(
-        "com.youmed.info:buoc9_xac_nhan_thanh_toan" to { _ ->
-            "Ông bà hãy đọc kỹ thông tin và xác nhận thanh toán."
-        }
-    )
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -89,6 +87,7 @@ class ScreenReaderService : AccessibilityService() {
 
         dsDichVu = DichVuLoader.taiTatCa(this)
         ttsManager = TextToSpeechManager(this)
+        voiceErrorChecker = VoiceError()
         initSpeechRecognizer()
         initFloatingMicrophone()
         huongDanLanDauNeuCan()
@@ -115,7 +114,23 @@ class ScreenReaderService : AccessibilityService() {
                     val clean = sentence.lowercase()
                     Log.d(TAG, "🎙️ Service nghe thấy lệnh: \"$clean\"")
                     resetNutHoiUi()
+                    // BƯỚC 1: KIỂM TRA PHÀN NÀN & XÓA CACHE TƯƠNG ỨNG
+                    if (voiceErrorChecker.isUserComplaining(sentence)) {
+                        Log.d(TAG, "Phát hiện phàn nàn trong Service: $sentence")
 
+                        // Xóa cache màn hình hiện tại (nếu có lưu) để ép AI quét và đưa ra hướng dẫn mới
+                        if (currentTextContent.isNotBlank()) {
+                            val activePackage = rootInActiveWindow?.packageName?.toString() ?: "chung"
+                            val hashKey = activePackage + ":" + currentTextContent.replace(Regex("\\d+"), "#") + ":"
+                            val screenHash = hashKey.hashCode()
+                            screenResponseCache.remove(screenHash)
+                        }
+
+                        PhienLamViec.cauHoiGhiAmTamThoi = "Ông bà vừa báo bước trước bị sai hoặc chưa làm được ($sentence). Hãy nhìn lại màn hình và hướng dẫn lại thật chi tiết."
+                        kichHoatQuetManHinh()
+                        return@SpeechRecognitionManager
+                    }
+                    // BƯỚC 2: XỬ LÝ LỆNH THƯỜNG / TÌM DỊCH VỤ
                     // Chủ động lấy package hiện hành để kiểm tra đang ở đâu
                     val activePackage = rootInActiveWindow?.packageName?.toString()
                     if (activePackage != null) {
@@ -239,10 +254,7 @@ class ScreenReaderService : AccessibilityService() {
         cardHoi?.setCardBackgroundColor(MAU_HOI_RANH)
     }
 
-    // =====================================================================
     // LOGIC QUÉT MÀN HÌNH MỚI (1 LẦN VÀ TẮT)
-    // =====================================================================
-
     private fun kichHoatQuetManHinh() {
         if (dangQuetManHinh) return
         dangQuetManHinh = true
@@ -297,7 +309,7 @@ class ScreenReaderService : AccessibilityService() {
         currentTextContent = semanticTree
 
         // 🚀 CHUYỂN LUỒNG 100% SANG AI: Bỏ qua JSON, gửi thẳng cho Gemini AI quét tự do
-        xuLyManHinhChuaBietBangAI(dichVu.tenGoi, semanticTree)
+        xuLyManHinhBangAI(dichVu.tenGoi, semanticTree)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -324,7 +336,7 @@ class ScreenReaderService : AccessibilityService() {
         }
     }
 
-    private fun xuLyManHinhChuaBietBangAI(tenDichVu: String, noiDungManHinh: String) {
+    private fun xuLyManHinhBangAI(tenDichVu: String, noiDungManHinh: String) {
         val cauHoi = PhienLamViec.cauHoiGhiAmTamThoi
         val hashKey = tenDichVu + ":" + noiDungManHinh.replace(Regex("\\d+"), "#") + ":" + (cauHoi ?: "")
         val screenHash = hashKey.hashCode()
@@ -347,8 +359,8 @@ class ScreenReaderService : AccessibilityService() {
 
         serviceScope.launch {
             try {
-                // Ghép nối câu hỏi nếu người dùng vừa mới bấm Mic hỏi trước đó
-                val contextCauHoi = if (cauHoi != null) "\nÔng bà vừa hỏi: $cauHoi" else ""
+                // ĐƯA CÂU HỎI HOẶC LỜI PHÀN NÀN VÀO PROMPT ĐỂ AI BIẾT ĐƯỜNG SỬA ĐỔI
+                val contextCauHoi = if (cauHoi != null) "\nLưu ý từ ông bà / Yêu cầu sửa lỗi: $cauHoi" else ""
                 val prompt = """
                     Ứng dụng: $tenDichVu | Mục tiêu: $mucDich $contextCauHoi
                     Toàn bộ nội dung màn hình (gồm cả nút bấm, ô nhập, thông tin):
