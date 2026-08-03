@@ -114,19 +114,21 @@ class ScreenReaderService : AccessibilityService() {
                     val clean = sentence.lowercase()
                     Log.d(TAG, "🎙️ Service nghe thấy lệnh: \"$clean\"")
                     resetNutHoiUi()
-                    // BƯỚC 1: KIỂM TRA PHÀN NÀN & XÓA CACHE TƯƠNG ỨNG
+
+                    // BƯỚC 1: KIỂM TRA PHÀN NÀN & XÓA SẠCH CACHE MÀN HÌNH HIỆN TẠI
                     if (voiceErrorChecker.isUserComplaining(sentence)) {
                         Log.d(TAG, "Phát hiện phàn nàn trong Service: $sentence")
 
                         // Xóa cache màn hình hiện tại (nếu có lưu) để ép AI quét và đưa ra hướng dẫn mới
                         if (currentTextContent.isNotBlank()) {
                             val activePackage = rootInActiveWindow?.packageName?.toString() ?: "chung"
-                            val hashKey = activePackage + ":" + currentTextContent.replace(Regex("\\d+"), "#") + ":"
+
+                            val hashKey = activePackage + ":" + currentTextContent.replace(Regex("\\d+"), "#") + ":COMPLAINT"
                             val screenHash = hashKey.hashCode()
                             screenResponseCache.remove(screenHash)
                         }
-
-                        PhienLamViec.cauHoiGhiAmTamThoi = "Ông bà vừa báo bước trước bị sai hoặc chưa làm được ($sentence). Hãy nhìn lại màn hình và hướng dẫn lại thật chi tiết."
+                        // Ép lưu câu hỏi tạm thời với nội dung cảnh báo AI sửa sai
+                        PhienLamViec.cauHoiGhiAmTamThoi = "Ông bà vừa báo bước trước bị sai ($sentence). Hãy nhìn lại màn hình và đổi hướng dẫn khác dễ hiểu hơn."
                         kichHoatQuetManHinh()
                         return@SpeechRecognitionManager
                     }
@@ -338,17 +340,21 @@ class ScreenReaderService : AccessibilityService() {
 
     private fun xuLyManHinhBangAI(tenDichVu: String, noiDungManHinh: String) {
         val cauHoi = PhienLamViec.cauHoiGhiAmTamThoi
-        val hashKey = tenDichVu + ":" + noiDungManHinh.replace(Regex("\\d+"), "#") + ":" + (cauHoi ?: "")
+        // Nếu là phàn nàn, gắn thêm từ khóa "COMPLAINT" vào khóa băm để ép hệ thống tạo mới hoàn toàn
+        val isComplaint = cauHoi != null && voiceErrorChecker.isUserComplaining(cauHoi)
+        val hashSuffix = if (isComplaint) ":COMPLAINT:${System.currentTimeMillis()}" else ":${cauHoi ?: ""}"
+        val hashKey = tenDichVu + ":" + noiDungManHinh.replace(Regex("\\d+"), "#") + hashSuffix
         val screenHash = hashKey.hashCode()
-
-        val cachedResponse = screenResponseCache.get(screenHash)
-        if (cachedResponse != null) {
-            ttsManager.speak(cachedResponse)
-            PhienLamViec.cauHoiGhiAmTamThoi = null
-            tatNutTheoDoi()
-            return
+        // Nếu không phải phàn nàn thì mới check cache cũ
+        if (!isComplaint) {
+            val cachedResponse = screenResponseCache.get(screenHash)
+            if (cachedResponse != null) {
+                ttsManager.speak(cachedResponse)
+                PhienLamViec.cauHoiGhiAmTamThoi = null
+                tatNutTheoDoi()
+                return
+            }
         }
-
         if (dangHoiAI) {
             tatNutTheoDoi()
             return
@@ -360,7 +366,7 @@ class ScreenReaderService : AccessibilityService() {
         serviceScope.launch {
             try {
                 // ĐƯA CÂU HỎI HOẶC LỜI PHÀN NÀN VÀO PROMPT ĐỂ AI BIẾT ĐƯỜNG SỬA ĐỔI
-                val contextCauHoi = if (cauHoi != null) "\nLưu ý từ ông bà / Yêu cầu sửa lỗi: $cauHoi" else ""
+                val contextCauHoi = if (cauHoi != null) "\nLƯU Ý QUAN TRỌNG TỪ ÔNG BÀ (CẦN SỬA ĐỔI NGAY): $cauHoi" else ""
                 val prompt = """
                     Ứng dụng: $tenDichVu | Mục tiêu: $mucDich $contextCauHoi
                     Toàn bộ nội dung màn hình (gồm cả nút bấm, ô nhập, thông tin):
@@ -369,7 +375,7 @@ class ScreenReaderService : AccessibilityService() {
 
                 val huongDan = geminiHelper.hoiTuDo(prompt)
 
-                if (huongDan.isNotEmpty() && !huongDan.contains("quá tải")) {
+                if (huongDan.isNotEmpty() && !huongDan.contains("quá tải")&& !isComplaint) {
                     screenResponseCache.put(screenHash, huongDan)
                 }
 

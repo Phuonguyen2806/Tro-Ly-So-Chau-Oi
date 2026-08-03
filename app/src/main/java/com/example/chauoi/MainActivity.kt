@@ -161,13 +161,13 @@ class MainActivity : AppCompatActivity() {
                     // Xóa khỏi cache toàn cục bên ScreenReaderService nếu có khớp
                     ScreenReaderService.screenResponseCache.remove(currentScreenKey.hashCode())
 
-                    PhienLamViec.cauHoiGhiAmTamThoi = "Ông bà vừa báo bước trước bị sai ($sentence). Hãy hướng dẫn lại thật chi tiết."
+                    PhienLamViec.cauHoiGhiAmTamThoi = "Ông bà vừa báo bước trước bị sai ($sentence). Hãy hướng dẫn lại thật chi tiết bằng cách khác."
 
                     ttsManager.speak("Cháu đang xem lại màn hình để hướng dẫn chính xác hơn, ông bà đợi chút nhé.")
 
                     lifecycleScope.launch {
                         try {
-                            val prompt = "Ông bà đang phàn nàn: $sentence. Hãy đọc lại nội dung và hướng dẫn lại bước tiếp theo thật dễ hiểu."
+                            val prompt = "Ông bà đang phàn nàn vì làm sai: $sentence. Hãy đọc lại nội dung và đưa ra hướng dẫn thay thế dễ hiểu hơn."
                             val freshInstruction = geminiHelper.hoiTuDo(prompt)
                             ttsManager.speak(freshInstruction)
                             tvStatus.text = freshInstruction
