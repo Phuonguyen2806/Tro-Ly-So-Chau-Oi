@@ -13,32 +13,37 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.example.chauoi.dichVu.CauHinhDichVu
 import com.example.chauoi.dichVu.DichVuLoader
 import com.example.chauoi.dichVu.moUngDung
 import com.example.chauoi.tts.SpeechRecognitionManager
 import com.example.chauoi.tts.TextToSpeechManager
-
+import com.example.chauoi.tts.VoiceError
+import com.example.chauoi.ai.GeminiHelper
+import com.example.chauoi.service.ScreenReaderService
+import com.example.chauoi.dichVu.PhienLamViec
+import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val REQUEST_RECORD_AUDIO_PERMISSION = 200
         private const val TAG = "ChauOiMainActivity"
     }
-
     private lateinit var speechManager: SpeechRecognitionManager
     private lateinit var ttsManager: TextToSpeechManager
-
+    private lateinit var voiceErrorChecker: VoiceError
+    private lateinit var geminiHelper: GeminiHelper
     private lateinit var tvStatus: TextView
     private lateinit var btnMicro: CardView
     private lateinit var frameMicWrapper: FrameLayout
-
     private lateinit var cardYouMed: CardView
     private lateinit var cardVNeID: CardView
     private lateinit var cardVssID: CardView
 
     // Danh sách dịch vụ nạp từ assets/services/*.json
     private lateinit var dsDichVu: List<CauHinhDichVu>
+    private var lastScannedScreenText: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,13 +65,17 @@ class MainActivity : AppCompatActivity() {
         cardYouMed = findViewById(R.id.cardYouMed)
         cardVNeID = findViewById(R.id.cardVNeID)
         cardVssID = findViewById(R.id.cardVssID)
+
         ttsManager = TextToSpeechManager(this)
+        voiceErrorChecker = VoiceError()
+        geminiHelper = GeminiHelper()
 
         checkRecordAudioPermission()
         initSpeechRecognizer()
 
         btnMicro.setOnClickListener {
             setListeningStateUI(true)
+            ttsManager.stop()
             speechManager.startListening()
         }
 
@@ -136,8 +145,39 @@ class MainActivity : AppCompatActivity() {
         speechManager = SpeechRecognitionManager(
             context = this,
             onResult = { sentence ->
+                setListeningStateUI(false)
                 val cleanSentence = sentence.lowercase()
+                tvStatus.text = "💬 Ông bà vừa nói: \"$sentence\""
 
+                // 1. KIỂM TRA CƠ CHẾ PHÀN NÀN / SỬA SAI
+                if (voiceErrorChecker.isUserComplaining(sentence)) {
+                    // Xóa cache màn hình hiện tại để ép AI phân tích mới
+                    val currentScreenKey = if (lastScannedScreenText.isNotBlank()) {
+                        lastScannedScreenText.take(200)
+                    } else {
+                        "man_hinh_mac_dinh"
+                    }
+
+                    // Xóa khỏi cache toàn cục bên ScreenReaderService nếu có khớp
+                    ScreenReaderService.screenResponseCache.remove(currentScreenKey.hashCode())
+
+                    PhienLamViec.cauHoiGhiAmTamThoi = "Ông bà vừa báo bước trước bị sai ($sentence). Hãy hướng dẫn lại thật chi tiết bằng cách khác."
+
+                    ttsManager.speak("Cháu đang xem lại màn hình để hướng dẫn chính xác hơn, ông bà đợi chút nhé.")
+
+                    lifecycleScope.launch {
+                        try {
+                            val prompt = "Ông bà đang phàn nàn vì làm sai: $sentence. Hãy đọc lại nội dung và đưa ra hướng dẫn thay thế dễ hiểu hơn."
+                            val freshInstruction = geminiHelper.hoiTuDo(prompt)
+                            ttsManager.speak(freshInstruction)
+                            tvStatus.text = freshInstruction
+                        } catch (e: Exception) {
+                            ttsManager.speak("Cháu xin lỗi, mạng bị lỗi, ông bà đợi cháu chút nhé.")
+                        }
+                    }
+                    return@SpeechRecognitionManager
+                }
+                // 2. XỬ LÝ TÌM DỊCH VỤ DỰA TRÊN CẤU HÌNH JSON NẠP VÀO
                 val dichVuPhuHop = dsDichVu.map { dichVu ->
                     val score = dichVu.tuKhoaGiongNoi.count { cleanSentence.contains(it) }
                     dichVu to score

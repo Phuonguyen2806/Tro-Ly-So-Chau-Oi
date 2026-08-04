@@ -55,4 +55,6 @@ dependencies {
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    //lifecycle
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
 }
