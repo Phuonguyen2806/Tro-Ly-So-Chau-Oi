@@ -19,12 +19,20 @@ class TextToSpeechManager(private val context: Context) {
         tts = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
 
-                val result = tts?.setLanguage(Locale("vi", "VN"))
+                val viVN = Locale("vi", "VN")
+                val result = tts?.setLanguage(viVN)
 
                 if (result == TextToSpeech.LANG_MISSING_DATA ||
                     result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    tts?.setLanguage(Locale.US)
-                    Log.w(TAG, "⚠️ Không có giọng tiếng Việt, dùng tiếng Anh tạm")
+                    // Thử lại với tag chuẩn vi-VN
+                    val result2 = tts?.setLanguage(Locale.forLanguageTag("vi-VN"))
+                    if (result2 == TextToSpeech.LANG_MISSING_DATA ||
+                        result2 == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        Log.e(TAG, "❌ Chưa cài giọng tiếng Việt! Vào Cài đặt > Trợ năng > TTS > Tải tiếng Việt")
+                        // KHÔNG fallback tiếng Anh - giữ nguyên để người dùng biết cần cài giọng Việt
+                    } else {
+                        Log.d(TAG, "✅ Đã đặt ngôn ngữ tiếng Việt (vi-VN tag)")
+                    }
                 } else {
                     Log.d(TAG, "✅ Đã đặt ngôn ngữ tiếng Việt")
                 }

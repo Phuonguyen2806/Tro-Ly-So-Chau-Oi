@@ -68,13 +68,6 @@ class ScreenReaderService : AccessibilityService() {
     private var currentTextContent: String = ""
     private var currentPackageName: String = ""
     private var lastEventTime = 0L
-
-    private val xuLyDacBietMap: Map<String, (String) -> String> = mapOf(
-        "com.youmed.info:buoc9_xac_nhan_thanh_toan" to { _ ->
-            "Ông bà hãy đọc kỹ thông tin và xác nhận thanh toán."
-        }
-    )
-
     override fun onServiceConnected() {
         super.onServiceConnected()
         val info = AccessibilityServiceInfo().apply {
@@ -285,30 +278,19 @@ class ScreenReaderService : AccessibilityService() {
             return
         }
 
-        val allTextGoc = collectAllText(rootNode)
+        val semanticTreeGoc = collectSemanticUITree(rootNode)
         rootNode.recycle()
-        if (allTextGoc.isBlank()) {
+        if (semanticTreeGoc.isBlank()) {
             ttsManager.speak("Màn hình này trống, cháu không thấy thông tin gì ạ.")
             tatNutTheoDoi()
             return
         }
 
-        val allText = lamSachText(allTextGoc, maxLength = 2000)
-        currentTextContent = allText
+        val semanticTree = lamSachText(semanticTreeGoc, maxLength = 2000)
+        currentTextContent = semanticTree
 
-        val buocHienTai = DichVuLoader.timBuocPhuHop(dichVu.buoc, allText)
-
-        if (buocHienTai == null) {
-            xuLyManHinhChuaBietBangAI(dichVu.tenGoi, allText)
-        } else {
-            val khoaXuLyDacBiet = "$packageName:${buocHienTai.id}"
-            val dong = if (buocHienTai.xuLyDacBiet) xuLyDacBietMap[khoaXuLyDacBiet]?.invoke(allText) else null
-            val huongDan = dong ?: buocHienTai.layHuongDan(PhienLamViec.mucDichHienTai)
-
-            ttsManager.speak(huongDan)
-            PhienLamViec.cauHoiGhiAmTamThoi = null // Xoá câu hỏi cũ
-            tatNutTheoDoi() // Đọc từ JSON xong -> Tắt nút
-        }
+        // 🚀 CHUYỂN LUỒNG 100% SANG AI: Bỏ qua JSON, gửi thẳng cho Gemini AI quét tự do
+        xuLyManHinhChuaBietBangAI(dichVu.tenGoi, semanticTree)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -318,24 +300,18 @@ class ScreenReaderService : AccessibilityService() {
         // Chỉ xử lý khi có sự kiện CHUYỂN CỬA SỔ (mở app mới hoặc qua màn hình mới)
         if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             val dichVu = dsDichVu.find { it.tenPackage == packageName }
-
             if (dichVu != null) {
                 val currentTime = System.currentTimeMillis()
-                // Chống spam: Tránh việc hệ thống nảy nhiều event liên tiếp làm TTS đọc chồng chéo
-                // Chỉ đọc câu nhắc khi cách lần đọc trước ít nhất 4 giây (4000ms)
                 if (currentTime - lastEventTime > 4000) {
                     if (packageName != currentPackageName) {
-                        // Trường hợp 1: Vừa từ màn hình chính (hoặc app khác) vào app đích
                         currentPackageName = packageName
                         ttsManager.speak(dichVu.cauChaoMung)
                     } else {
-                        // Trường hợp 2: Đang ở trong app đích, nhưng chuyển sang trang/bước khác
                         ttsManager.speak(dichVu.cauNhanChuyenManHinh)
                     }
                     lastEventTime = currentTime
                 }
             } else {
-                // Đã thoát ra app khác không được hỗ trợ
                 currentPackageName = packageName
             }
         }
@@ -405,6 +381,38 @@ class ScreenReaderService : AccessibilityService() {
             .replace(Regex("(\\S+)(\\s\\1)+"), "$1")
             .trim()
             .take(maxLength)
+    }
+
+    private fun collectSemanticUITree(node: AccessibilityNodeInfo): String {
+        val nutBam = mutableListOf<String>()
+        val oNhap = mutableListOf<String>()
+        val thongTin = mutableListOf<String>()
+
+        fun traverse(n: AccessibilityNodeInfo) {
+            val text = (n.text ?: n.hintText ?: n.contentDescription ?: "").toString().trim()
+            if (n.isEditable) {
+                val tenONhap = text.ifEmpty { "Ô nhập liệu" }
+                if (!oNhap.contains(tenONhap)) oNhap.add(tenONhap)
+            } else if (text.isNotEmpty()) {
+                if (n.isClickable) {
+                    if (!nutBam.contains(text)) nutBam.add(text)
+                } else {
+                    if (!thongTin.contains(text)) thongTin.add(text)
+                }
+            }
+            for (i in 0 until n.childCount) {
+                val child = n.getChild(i) ?: continue
+                traverse(child)
+                child.recycle()
+            }
+        }
+        traverse(node)
+
+        val sb = StringBuilder()
+        if (nutBam.isNotEmpty()) sb.append("[Nút bấm]: ").append(nutBam.joinToString(", ")).append("\n")
+        if (oNhap.isNotEmpty()) sb.append("[Ô nhập]: ").append(oNhap.joinToString(", ")).append("\n")
+        if (thongTin.isNotEmpty()) sb.append("[Thông tin]: ").append(thongTin.joinToString(", "))
+        return sb.toString()
     }
 
     private fun collectAllText(node: AccessibilityNodeInfo): String {
