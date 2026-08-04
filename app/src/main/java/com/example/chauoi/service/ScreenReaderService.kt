@@ -395,16 +395,50 @@ class ScreenReaderService : AccessibilityService() {
         val oNhap = mutableListOf<String>()
         val thongTin = mutableListOf<String>()
 
+        fun coTheDocDuoc(str: String): Boolean {
+            // Bỏ qua chuỗi rỗng
+            if (str.isBlank()) return false
+            // Bỏ qua chuỗi quá ngắn (icon thường chỉ có 1-2 ký tự mô tả kỹ thuật)
+            if (str.length < 2) return false
+            // Bỏ qua nếu chuỗi chỉ gồm toàn ký tự đặc biệt/ASCII không có nghĩa
+            // Giữ lại nếu có ít nhất 2 chữ cái có nghĩa (tiếng Việt hoặc chữ thường)
+            val soKyTuCoNghia = str.count { it.isLetter() }
+            if (soKyTuCoNghia < 2) return false
+            return true
+        }
+
+        fun layTextNutBam(n: AccessibilityNodeInfo): String {
+            // Ưu tiên n.text (văn bản hiển thị thật sự) trước
+            // Chỉ dùng contentDescription nếu không có text và contentDescription đủ dài có nghĩa
+            val fromText = n.text?.toString()?.trim() ?: ""
+            val fromHint = n.hintText?.toString()?.trim() ?: ""
+            val fromDesc = n.contentDescription?.toString()?.trim() ?: ""
+
+            return when {
+                fromText.isNotEmpty() -> fromText
+                fromHint.isNotEmpty() -> fromHint
+                // Chỉ dùng contentDescription nếu trông như chữ có nghĩa (không phải tên icon kỹ thuật)
+                fromDesc.isNotEmpty() && coTheDocDuoc(fromDesc) && fromDesc.length >= 3 -> fromDesc
+                else -> ""
+            }
+        }
+
         fun traverse(n: AccessibilityNodeInfo) {
-            val text = (n.text ?: n.hintText ?: n.contentDescription ?: "").toString().trim()
+            // ⭐ Bỏ qua các node không hiển thị trên màn hình (ví dụ: sidebar menu ẩn)
+            if (!n.isVisibleToUser) return
+
             if (n.isEditable) {
+                val text = (n.text ?: n.hintText ?: n.contentDescription ?: "").toString().trim()
                 val tenONhap = text.ifEmpty { "Ô nhập liệu" }
                 if (!oNhap.contains(tenONhap)) oNhap.add(tenONhap)
-            } else if (text.isNotEmpty()) {
-                if (n.isClickable) {
-                    if (!nutBam.contains(text)) nutBam.add(text)
-                } else {
-                    if (!thongTin.contains(text)) thongTin.add(text)
+            } else {
+                val text = layTextNutBam(n)
+                if (text.isNotEmpty() && coTheDocDuoc(text)) {
+                    if (n.isClickable) {
+                        if (!nutBam.contains(text)) nutBam.add(text)
+                    } else {
+                        if (!thongTin.contains(text)) thongTin.add(text)
+                    }
                 }
             }
             for (i in 0 until n.childCount) {
@@ -419,7 +453,11 @@ class ScreenReaderService : AccessibilityService() {
         if (nutBam.isNotEmpty()) sb.append("[Nút bấm]: ").append(nutBam.joinToString(", ")).append("\n")
         if (oNhap.isNotEmpty()) sb.append("[Ô nhập]: ").append(oNhap.joinToString(", ")).append("\n")
         if (thongTin.isNotEmpty()) sb.append("[Thông tin]: ").append(thongTin.joinToString(", "))
-        return sb.toString()
+
+        val result = sb.toString()
+        // 🖨️ In ra Logcat để debug thực tế - xem màn hình nào bị lấy nhầm icon
+        android.util.Log.d("ChauOiService", "📋 [SEMANTIC TREE]\n$result")
+        return result
     }
 
     private fun collectAllText(node: AccessibilityNodeInfo): String {

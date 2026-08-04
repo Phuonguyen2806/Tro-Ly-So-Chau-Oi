@@ -84,11 +84,17 @@ class GeminiHelper {
                         "⚠️ Key [$keyIndex/${totalKeys - 1}] bị giới hạn. Đang xoay..."
                     )
 
-                    // Nếu dính lỗi Quota hoặc Permission Denied ➔ Xoay sang Key tiếp theo
-                    if (errStr.contains("QuotaExceededException", ignoreCase = true) ||
+                    // Nếu dính lỗi Quota hoặc Permission Denied hoặc Server quá tải ➔ Xoay sang Key tiếp theo
+                    val laLoiCoTheXoay =
+                        errStr.contains("QuotaExceededException", ignoreCase = true) ||
                         errStr.contains("403", ignoreCase = true) ||
-                        errStr.contains("PERMISSION_DENIED", ignoreCase = true)
-                    ) {
+                        errStr.contains("PERMISSION_DENIED", ignoreCase = true) ||
+                        errStr.contains("503", ignoreCase = true) ||
+                        errStr.contains("UNAVAILABLE", ignoreCase = true) ||
+                        errStr.contains("high demand", ignoreCase = true) ||
+                        errStr.contains("overloaded", ignoreCase = true)
+
+                    if (laLoiCoTheXoay) {
                         attempts++
                         continue
                     } else {
@@ -98,10 +104,10 @@ class GeminiHelper {
                 attempts++
             }
 
-            // Nếu đi hết cả 3 key ở lượt 1 mà đều bận ngắn hạn ➔ Chờ 4s cho Quota tự hồi rồi thử lượt 2
+            // Nếu đi hết cả 3 key ở lượt 1 mà đều bận ngắn hạn ➔ Chờ 6s cho server hồi phục rồi thử lượt 2
             if (pass < maxPasses - 1) {
-                android.util.Log.i("ChauOiService", "⏳ Tất cả Keys bận ngắn hạn, tự động chờ 4 giây cho Quota tự nhả...")
-                kotlinx.coroutines.delay(4000)
+                android.util.Log.i("ChauOiService", "⏳ Tất cả Keys bận ngắn hạn (có thể do 503), tự động chờ 6 giây rồi thử lại...")
+                kotlinx.coroutines.delay(6000)
             }
         }
 
@@ -149,12 +155,17 @@ class GeminiHelper {
                 generateWithKeyRotation(prompt)
             } catch (e: Exception) {
                 android.util.Log.e("ChauOiService", "Lỗi tất cả Gemini Keys: ", e)
-                if (e.toString().contains("QuotaExceeded", ignoreCase = true) ||
-                    e.message?.contains("Tất cả", ignoreCase = true) == true
-                ) {
-                    "Hệ thống đang quá tải, ông bà vui lòng đợi khoảng 1 phút rồi thử lại nhé."
-                } else {
-                    "Cháu chưa rõ bước này, ông bà thử hỏi cháu trực tiếp nhé."
+                val errMsg = e.toString()
+                when {
+                    errMsg.contains("503", ignoreCase = true) ||
+                    errMsg.contains("UNAVAILABLE", ignoreCase = true) ||
+                    errMsg.contains("high demand", ignoreCase = true) ->
+                        "AI đang bận do nhiều người dùng, ông bà chờ vài giây rồi thử bấm con mắt lại nhé."
+                    errMsg.contains("QuotaExceeded", ignoreCase = true) ||
+                    e.message?.contains("Tất cả", ignoreCase = true) == true ->
+                        "Hệ thống đang quá tải, ông bà vui lòng đợi khoảng 1 phút rồi thử lại nhé."
+                    else ->
+                        "Mạng đang chậm hoặc gián đoạn, ông bà chờ vài giây rồi thử lại nhé."
                 }
             }
         }
