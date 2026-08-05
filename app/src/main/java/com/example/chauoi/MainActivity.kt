@@ -1,8 +1,13 @@
 package com.example.chauoi
 
 import android.Manifest
+import android.app.AlertDialog
+import android.content.ComponentName
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.provider.Settings
+import android.text.TextUtils
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -40,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cardYouMed: CardView
     private lateinit var cardVNeID: CardView
     private lateinit var cardVssID: CardView
+    private lateinit var btnTroGiup: CardView
 
     // Danh sách dịch vụ nạp từ assets/services/*.json
     private lateinit var dsDichVu: List<CauHinhDichVu>
@@ -65,6 +71,7 @@ class MainActivity : AppCompatActivity() {
         cardYouMed = findViewById(R.id.cardYouMed)
         cardVNeID = findViewById(R.id.cardVNeID)
         cardVssID = findViewById(R.id.cardVssID)
+        btnTroGiup = findViewById(R.id.btnTroGiup)
 
         ttsManager = TextToSpeechManager(this)
         voiceErrorChecker = VoiceError()
@@ -91,6 +98,91 @@ class MainActivity : AppCompatActivity() {
         cardVssID.setOnClickListener {
             dsDichVu.find { it.tenPackage == "com.bhxhapp" }?.moUngDung(this)
         }
+        btnTroGiup.setOnClickListener {
+            hienThiDialogHuongDanSuDung()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Mỗi lần quay lại app (kể cả sau khi ông bà vừa bật Cài Đặt xong) đều kiểm tra lại
+        if (!isAccessibilityServiceEnabled()) {
+            hienThiDialogBatAccessibility()
+        }
+    }
+
+    /**
+     * Kiểm tra xem ScreenReaderService đã được bật trong Cài Đặt > Trợ Năng chưa.
+     */
+    private fun isAccessibilityServiceEnabled(): Boolean {
+        val expectedComponentName = ComponentName(this, ScreenReaderService::class.java)
+        val enabledServicesSetting = Settings.Secure.getString(
+            contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        ) ?: return false
+
+        val colonSplitter = TextUtils.SimpleStringSplitter(':')
+        colonSplitter.setString(enabledServicesSetting)
+        while (colonSplitter.hasNext()) {
+            val enabledComponentName = ComponentName.unflattenFromString(colonSplitter.next())
+            if (enabledComponentName != null && enabledComponentName == expectedComponentName) {
+                return true
+            }
+        }
+        return false
+    }
+
+    /**
+     * Hiển thị dialog hướng dẫn 3 bước bật quyền Trợ Năng cho ông bà,
+     * kèm đọc to hướng dẫn bằng giọng nói.
+     */
+    private fun hienThiDialogBatAccessibility() {
+        val view = layoutInflater.inflate(R.layout.dialog_huong_dan_accessibility, null)
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(view)
+            .setCancelable(false)
+            .create()
+
+        view.findViewById<CardView>(R.id.btnMoCaiDat).setOnClickListener {
+            dialog.dismiss()
+            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        }
+
+        view.findViewById<TextView>(R.id.btnDeSau).setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
+
+        ttsManager.speak(
+            "Ông bà ơi, để cháu hướng dẫn được ông bà thao tác trên màn hình, " +
+                    "mình cần bật quyền Trợ Năng trước ạ. Ông bà bấm nút Mở Cài Đặt Ngay, " +
+                    "sau đó tìm chữ Cháu Ơi rồi bật lên giúp cháu nhé."
+        )
+    }
+
+    /**
+     * Hiển thị dialog giải thích cách dùng nút Loa (mic) và nút Con Mắt.
+     */
+    private fun hienThiDialogHuongDanSuDung() {
+        val view = layoutInflater.inflate(R.layout.dialog_huong_dan_su_dung, null)
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(view)
+            .setCancelable(true)
+            .create()
+
+        view.findViewById<CardView>(R.id.btnDongHuongDan).setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
+
+        ttsManager.speak(
+            "Nút loa màu cam ở trên dùng để ông bà bấm rồi nói mong muốn. " +
+                    "Nút con mắt màu xám ở dưới dùng để cháu xem màn hình và hướng dẫn bước tiếp theo ạ."
+        )
     }
 
     private fun setListeningStateUI(isListening: Boolean) {
