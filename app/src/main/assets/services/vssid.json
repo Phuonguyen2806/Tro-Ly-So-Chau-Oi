@@ -1,0 +1,46 @@
+{
+  "tenGoi": "VssID",
+  "tenPackage": "com.bhxhapp",
+  "tuKhoaGiongNoi": ["vssid", "bảo hiểm"],
+  "cauPhanHoiKhiMo": "Cháu đang mở ứng dụng VssID cho ông bà đây ạ!",
+  "cauChaoMung": "Ông bà đã vào ứng dụng Bảo hiểm. Lần đầu tiên, ông bà hãy chạm nút micro màu xanh ở trên và nói mục đích cho cháu biết nhé.",
+  "cauNhanChuyenManHinh": "Màn hình đã chuyển. Ông bà tiếp tục chạm vào nút con mắt ở dưới để cháu hướng dẫn bước tiếp theo nhé.",
+  "mucDich": [
+    {
+      "id": "cap_lai_bhyt",
+      "tenGoi": "Cấp lại thẻ BHYT",
+      "tuKhoaGiongNoi": ["làm lại thẻ", "cấp lại thẻ", "mất thẻ", "đổi thẻ bảo hiểm"]
+    },
+    {
+      "id": "xem_the_bhyt",
+      "tenGoi": "Xem thẻ BHYT",
+      "tuKhoaGiongNoi": ["xem thẻ", "mở thẻ bảo hiểm", "thẻ bảo hiểm của tôi"]
+    },
+    {
+      "id": "tra_cuu_qua_trinh",
+      "tenGoi": "Xem quá trình tham gia",
+      "tuKhoaGiongNoi": ["quá trình tham gia", "sổ bảo hiểm", "thời gian đóng"]
+    },
+    {
+      "id": "tra_cuu_truc_tuyen",
+      "tenGoi": "Tra cứu trực tuyến",
+      "tuKhoaGiongNoi": ["tra cứu", "mã số bảo hiểm xã hội", "trực tuyến"]
+    },
+    {
+      "id": "so_kham_chua_benh",
+      "tenGoi": "Sổ khám chữa bệnh",
+      "tuKhoaGiongNoi": ["sổ", "sổ khám", "lịch sử khám bệnh"]
+    },
+    {
+      "id": "cap_lai_so_bhxh",
+      "tenGoi": "Cấp lại sổ BHXH",
+      "tuKhoaGiongNoi": ["cấp lại sổ", "làm lại sổ bảo hiểm xã hội", "mất sổ bảo hiểm"]
+    },
+    {
+      "id": "dang_ky_tai_khoan_cho_con",
+      "tenGoi": "Đăng ký tài khoản cho con",
+      "tuKhoaGiongNoi": ["đăng ký cho con", "làm tài khoản cho con", "đăng ký giao dịch điện tử cho con"]
+    }
+  ],
+  "buoc": []
+}
