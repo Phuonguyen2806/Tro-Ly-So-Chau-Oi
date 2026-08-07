@@ -192,8 +192,10 @@ class MainActivity : AppCompatActivity() {
                         dichVuPhuHop.moUngDung(this@MainActivity)
                     }, 3500)
                 } else {
-                    setErrorStateUI("⚠️ Cháu chưa nghe rõ câu: \"$sentence\"\nÔng bà hãy thử nói lại hoặc bấm thẻ dịch vụ bên dưới nhé.")
-                    ttsManager.speak("Cháu chưa nghe rõ, ông bà vui lòng nói lại hoặc chọn trực tiếp thẻ dịch vụ bên dưới nhé.")
+                    // 3. NẾU NÓI CÁC TÍNH NĂNG KHÔNG HỖ TRỢ (vd: khai sinh, khai tử,...) hoặc nói chung chung
+                    val cauThongBaoChuaHoTro = "Chức năng này cháu chưa hỗ trợ, ông bà vui lòng chọn trực tiếp thẻ dịch vụ bên dưới nhé."
+                    setErrorStateUI("⚠️ Chức năng này cháu chưa hỗ trợ: \"$sentence\"\nÔng bà hãy thử nói lại hoặc bấm thẻ dịch vụ bên dưới nhé.")
+                    ttsManager.speak(cauThongBaoChuaHoTro)
                 }
             },
             onErrorMsg = { error ->
