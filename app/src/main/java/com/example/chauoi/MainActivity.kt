@@ -231,7 +231,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
     private fun initSpeechRecognizer() {
         speechManager = SpeechRecognitionManager(
             context = this,

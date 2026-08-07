@@ -34,7 +34,6 @@ object DichVuLoader {
 
         return ketQua
     }
-
     private fun layDanhSachMacDinh(): List<CauHinhDichVu> {
         return listOf(
             CauHinhDichVu(
