@@ -131,7 +131,6 @@ class MainActivity : AppCompatActivity() {
         }
         return false
     }
-
     /**
      * Hiển thị dialog hướng dẫn 3 bước bật quyền Trợ Năng cho ông bà,
      * kèm đọc to hướng dẫn bằng giọng nói.

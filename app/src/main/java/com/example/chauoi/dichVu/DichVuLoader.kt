@@ -66,7 +66,6 @@ object DichVuLoader {
             )
         )
     }
-
     private fun parseCauHinh(obj: JSONObject): CauHinhDichVu {
         return CauHinhDichVu(
             tenGoi = obj.getString("tenGoi"),
