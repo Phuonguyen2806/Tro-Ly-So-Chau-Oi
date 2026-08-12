@@ -128,7 +128,7 @@ class GeminiHelper {
                 val contextMucDich = if (mucDich != null) "Mục tiêu: $mucDich." else ""
                 val prompt = """
                     Ứng dụng: $tenDichVu | $contextMucDich
-                    Toàn bộ nội dung màn hình: ${'$'}{screenText.take(4000)}
+                    Toàn bộ nội dung màn hình: ${screenText.take(4000)}
                     Ông bà hỏi: $userQuestion
                 """.trimIndent()
 
