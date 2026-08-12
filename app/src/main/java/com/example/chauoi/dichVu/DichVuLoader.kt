@@ -41,7 +41,7 @@ object DichVuLoader {
                 tenPackage = "com.youmed.info",
                 tuKhoaGiongNoi = listOf("đặt lịch khám", "đặt khám", "youmed", "bác sĩ", "đặt lịch bác sĩ"),
                 cauPhanHoiKhiMo = "Cháu đang mở ứng dụng đặt lịch khám YouMed cho ông bà đây ạ!",
-                cauChaoMung = "Ông bà đã vào YouMed. Lần đầu tiên, ông bà hãy chạm nút micro màu xanh ở trên và nói cho cháu biết ông bà muốn làm gì nhé.",
+                cauChaoMung = "Ông bà đã vào YouMed. Lần đầu tiên, ông bà hãy chạm nút micro màu cam ở trên và nói cho cháu biết ông bà muốn làm gì nhé.",
                 cauNhanChuyenManHinh = "Màn hình đã chuyển. Ông bà tiếp tục chạm vào nút con mắt ở dưới để cháu hướng dẫn bước tiếp theo nhé.",
                 buoc = emptyList()
             ),
@@ -49,9 +49,9 @@ object DichVuLoader {
                 tenGoi = "VNeID",
                 tenPackage = "com.vnid",
                 tuKhoaGiongNoi = listOf("vneid", "vi en id", "căn cước công dân", "thẻ căn cước", "cccd", "tạm vắng", "tạm trú", "thường trú", "khai báo", "dân cư",
-                    "thông báo lưu trú", "giấy tờ", "định danh", "tài khoản định danh", "đăng ký xe", "khai tử"),
+                    "thông báo lưu trú", "giấy tờ", "định danh", "tài khoản định danh", "đăng ký xe", "khai tử","giấy phép lái xe"),
                 cauPhanHoiKhiMo = "Cháu đang mở ứng dụng VNeID cho ông bà đây ạ!",
-                cauChaoMung = "Ông bà đã vào VNeID. Lần đầu tiên, ông bà hãy chạm nút micro màu xanh ở trên và nói cho cháu biết ông bà cần làm thủ tục gì nhé.",
+                cauChaoMung = "Ông bà đã vào VNeID. Lần đầu tiên, ông bà hãy chạm nút micro màu cam ở trên và nói cho cháu biết ông bà cần làm thủ tục gì nhé.",
                 cauNhanChuyenManHinh = "Màn hình đã chuyển. Ông bà tiếp tục chạm vào nút con mắt ở dưới để cháu quét và hướng dẫn nhé.",
                 buoc = emptyList()
             ),
@@ -60,7 +60,7 @@ object DichVuLoader {
                 tenPackage = "com.bhxhapp",
                 tuKhoaGiongNoi = listOf("vssid", "vi ss id", "bảo hiểm xã hội", "bảo hiểm y tế", "sổ bảo hiểm", "thẻ bảo hiểm", "quá trình tham gia"),
                 cauPhanHoiKhiMo = "Cháu đang mở ứng dụng VssID cho ông bà đây ạ!",
-                cauChaoMung = "Ông bà đã vào ứng dụng Bảo hiểm. Lần đầu tiên, ông bà hãy chạm nút micro màu xanh ở trên và nói mục đích cho cháu biết nhé.",
+                cauChaoMung = "Ông bà đã vào ứng dụng Bảo hiểm. Lần đầu tiên, ông bà hãy chạm nút micro màu cam ở trên và nói mục đích cho cháu biết nhé.",
                 cauNhanChuyenManHinh = "Màn hình đã chuyển. Ông bà tiếp tục chạm vào nút con mắt ở dưới để cháu hướng dẫn bước tiếp theo nhé.",
                 buoc = emptyList()
             )
