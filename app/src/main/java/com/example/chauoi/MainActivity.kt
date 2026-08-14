@@ -26,6 +26,7 @@ import com.example.chauoi.tts.SpeechRecognitionManager
 import com.example.chauoi.tts.TextToSpeechManager
 import com.example.chauoi.tts.VoiceError
 import com.example.chauoi.ai.GeminiHelper
+import com.example.chauoi.ai.AIIntentMatcher
 import com.example.chauoi.service.ScreenReaderService
 import com.example.chauoi.dichVu.PhienLamViec
 import kotlinx.coroutines.launch
@@ -39,6 +40,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var ttsManager: TextToSpeechManager
     private lateinit var voiceErrorChecker: VoiceError
     private lateinit var geminiHelper: GeminiHelper
+    private lateinit var aiIntentMatcher: AIIntentMatcher
     private lateinit var tvStatus: TextView
     private lateinit var btnMicro: CardView
     private lateinit var frameMicWrapper: FrameLayout
@@ -76,6 +78,7 @@ class MainActivity : AppCompatActivity() {
         ttsManager = TextToSpeechManager(this)
         voiceErrorChecker = VoiceError()
         geminiHelper = GeminiHelper()
+        aiIntentMatcher = AIIntentMatcher(this)
 
         checkRecordAudioPermission()
         initSpeechRecognizer()
@@ -267,12 +270,8 @@ class MainActivity : AppCompatActivity() {
                     }
                     return@SpeechRecognitionManager
                 }
-                // 2. XỬ LÝ TÌM DỊCH VỤ DỰA TRÊN CẤU HÌNH JSON NẠP VÀO
-                val dichVuPhuHop = dsDichVu.map { dichVu ->
-                    val score = dichVu.tuKhoaGiongNoi.count { cleanSentence.contains(it) }
-                    dichVu to score
-                }.filter { it.second > 0 }
-                    .maxByOrNull { it.second }?.first
+                // 2. XỬ LÝ TÌM DỊCH VỤ DỰA TRÊN AI EMBEDDING
+                val dichVuPhuHop = aiIntentMatcher.timAppPhuHop(cleanSentence, dsDichVu)
 
                 if (dichVuPhuHop != null) {
                     setListeningStateUI(false)
@@ -282,7 +281,7 @@ class MainActivity : AppCompatActivity() {
                         dichVuPhuHop.moUngDung(this@MainActivity)
                     }, 3500)
                 } else {
-                    // 3. NẾU NÓI CÁC TÍNH NĂNG KHÔNG HỖ TRỢ (vd: khai sinh, khai tử,...) hoặc nói chung chung
+                    // 3. NẾU AI KHÔNG TÌM THẤY Ý ĐỊNH PHÙ HỢP
                     val cauThongBaoChuaHoTro = "Chức năng này cháu chưa hỗ trợ, ông bà vui lòng chọn trực tiếp thẻ dịch vụ bên dưới nhé."
                     setErrorStateUI("⚠️ Chức năng này cháu chưa hỗ trợ: \"$sentence\"\nÔng bà hãy thử nói lại hoặc bấm thẻ dịch vụ bên dưới nhé.")
                     ttsManager.speak(cauThongBaoChuaHoTro)
@@ -298,5 +297,6 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         speechManager.destroy()
         ttsManager.shutdown()
+        aiIntentMatcher.close()
     }
 }
