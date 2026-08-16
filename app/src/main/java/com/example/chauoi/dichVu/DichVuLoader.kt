@@ -54,7 +54,7 @@ object DichVuLoader {
                     "thủ tục công an"
                 ),
                 cauPhanHoiKhiMo = "Cháu đang mở ứng dụng VNeID cho ông bà đây ạ!",
-                cauChaoMung = "Ông bà đã vào VNeID. Lần đầu tiên, ông bà hãy chạm nút micro màu xanh ở trên và nói cho cháu biết ông bà cần làm thủ tục gì nhé.",
+                cauChaoMung = "Ông bà đã vào VNeID. Lần đầu tiên, ông bà hãy chạm nút micro màu cam ở trên và nói cho cháu biết ông bà cần làm thủ tục gì nhé.",
                 cauNhanChuyenManHinh = "Màn hình đã chuyển. Ông bà tiếp tục chạm vào nút con mắt ở dưới để cháu quét và hướng dẫn nhé.",
 //                buoc = emptyList()
             ),
@@ -124,7 +124,7 @@ object DichVuLoader {
                     "ủy quyền lĩnh thay lương hưu"
                 ),
                 cauPhanHoiKhiMo = "Cháu đang mở ứng dụng VssID cho ông bà đây ạ!",
-                cauChaoMung = "Ông bà đã vào ứng dụng Bảo hiểm. Lần đầu tiên, ông bà hãy chạm nút micro màu xanh ở trên và nói mục đích cho cháu biết nhé.",
+                cauChaoMung = "Ông bà đã vào ứng dụng Bảo hiểm. Lần đầu tiên, ông bà hãy chạm nút micro màu cam ở trên và nói mục đích cho cháu biết nhé.",
                 cauNhanChuyenManHinh = "Màn hình đã chuyển. Ông bà tiếp tục chạm vào nút con mắt ở dưới để cháu hướng dẫn bước tiếp theo nhé.",
 //                buoc = emptyList()
             )

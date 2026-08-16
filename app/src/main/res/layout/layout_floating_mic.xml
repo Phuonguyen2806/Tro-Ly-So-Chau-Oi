@@ -8,51 +8,89 @@
     android:orientation="vertical"
     android:padding="6dp">
 
-    <!-- Nút 1 (TRÊN): Chạm để hỏi bằng giọng nói (Hành động chính) -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardHoi"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:clickable="true"
-        android:focusable="true"
-        app:cardBackgroundColor="#FF7043"
-        app:cardCornerRadius="32dp"
-        app:cardElevation="10dp">
+    <!-- Hàng 1: Nút Hỏi (mic) + bong bóng hướng dẫn tự động -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-        <ImageView
-            android:id="@+id/imgHoi"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_gravity="center"
-            android:contentDescription="Hỏi trợ lý bằng giọng nói"
-            android:src="@drawable/ic_mic_large"
-            app:tint="#FFFFFF" />
-    </androidx.cardview.widget.CardView>
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardHoi"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="#FF7043"
+            app:cardCornerRadius="32dp"
+            app:cardElevation="10dp">
+
+            <ImageView
+                android:id="@+id/imgHoi"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="center"
+                android:contentDescription="Hỏi trợ lý bằng giọng nói"
+                android:src="@drawable/ic_mic_large"
+                app:tint="#FFFFFF" />
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:id="@+id/tvHintHoi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:background="#DD222222"
+            android:padding="10dp"
+            android:text="Bấm vào đây rồi nói điều ông bà cần nhé"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:visibility="gone" />
+    </LinearLayout>
 
     <!-- Khoảng cách an toàn giữa 2 nút (Tránh bấm nhầm) -->
     <View
         android:layout_width="1dp"
         android:layout_height="14dp" />
 
-    <!-- Nút 2 (DƯỚI): Bật quét màn hình 1 lần (Hành động phụ) -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardTheoDoi"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:clickable="true"
-        android:focusable="true"
-        app:cardBackgroundColor="#757575"
-        app:cardCornerRadius="32dp"
-        app:cardElevation="10dp">
+    <!-- Hàng 2: Nút Con mắt + bong bóng hướng dẫn tự động -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-        <ImageView
-            android:id="@+id/imgTheoDoi"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:layout_gravity="center"
-            android:contentDescription="Quét và đọc màn hình hiện tại"
-            android:src="@android:drawable/ic_menu_view"
-            app:tint="#FFFFFF" />
-    </androidx.cardview.widget.CardView>
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardTheoDoi"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="#757575"
+            app:cardCornerRadius="32dp"
+            app:cardElevation="10dp">
+
+            <ImageView
+                android:id="@+id/imgTheoDoi"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_gravity="center"
+                android:contentDescription="Quét và đọc màn hình hiện tại"
+                android:src="@android:drawable/ic_menu_view"
+                app:tint="#FFFFFF" />
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:id="@+id/tvHintTheoDoi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:background="#DD222222"
+            android:padding="10dp"
+            android:text="Bấm vào đây để cháu xem màn hình và hướng dẫn"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:visibility="gone" />
+    </LinearLayout>
 
 </LinearLayout>
