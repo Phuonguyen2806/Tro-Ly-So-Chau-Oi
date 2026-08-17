@@ -23,6 +23,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 import androidx.cardview.widget.CardView
 import com.example.chauoi.R
 import com.example.chauoi.ai.GeminiHelper
+import com.example.chauoi.ai.AIIntentMatcher
 import com.example.chauoi.dichVu.CauHinhDichVu
 import com.example.chauoi.dichVu.DichVuLoader
 import com.example.chauoi.dichVu.PhienLamViec
@@ -62,7 +63,7 @@ class ScreenReaderService : AccessibilityService() {
 
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val geminiHelper = GeminiHelper()
-
+    private lateinit var aiIntentMatcher: AIIntentMatcher
     private var dangHoiAI = false
     private var dangQuetManHinh = false // Cờ tránh bấm nút con mắt 2 lần liên tục
 
@@ -143,16 +144,13 @@ class ScreenReaderService : AccessibilityService() {
                         kichHoatQuetManHinh()
                         return@SpeechRecognitionManager
                     }
-                    // BƯỚC 2: XỬ LÝ LỆNH THƯỜNG / TÌM DỊCH VỤ
-                    // Chủ động lấy package hiện hành để kiểm tra đang ở đâu
+                    // BƯỚC 2: XỬ LÝ LỆNH THƯỜNG / TÌM DỊCH VỤ DỰA TRÊN AI
                     val activePackage = rootInActiveWindow?.packageName?.toString()
                     if (activePackage != null) {
                         currentPackageName = activePackage
                     }
 
-                    val dichVuPhuHop = dsDichVu.find { dv ->
-                        dv.tuKhoaGiongNoi.any { clean.contains(it) }
-                    }
+                    val dichVuPhuHop = aiIntentMatcher.timAppPhuHop(clean, dsDichVu)
 
                     if (dichVuPhuHop != null) {
                         if (currentPackageName == dichVuPhuHop.tenPackage) {
@@ -167,11 +165,8 @@ class ScreenReaderService : AccessibilityService() {
                             PhienLamViec.cauHoiGhiAmTamThoi = sentence
                             ttsManager.speak("Ông bà hãy chạm vào nút hình con mắt ở dưới, để cháu quét màn hình này và trả lời nhé.")
                         } else {
-                            // Mở app mới
-                            val mucDichPhuHop = dichVuPhuHop.mucDich.find { md ->
-                                md.tuKhoaGiongNoi.any { clean.contains(it) }
-                            }
-                            PhienLamViec.mucDichHienTai = mucDichPhuHop?.id ?: "chung"
+                            // Mở app mới (Thiết lập mục đích mặc định là chung do cấu hình đã tinh giản)
+                            PhienLamViec.mucDichHienTai = "chung"
 
                             ttsManager.speak(dichVuPhuHop.cauPhanHoiKhiMo)
                             val intent =
@@ -179,6 +174,8 @@ class ScreenReaderService : AccessibilityService() {
                             if (intent != null) {
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 startActivity(intent)
+                            } else {
+                                ttsManager.speak("Ứng dụng này chưa được cài đặt trên thiết bị ạ.")
                             }
                         }
                     } else {

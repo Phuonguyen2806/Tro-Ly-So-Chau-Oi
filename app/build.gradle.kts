@@ -3,13 +3,16 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
 }
-
+configurations.all {
+    exclude(group = "com.google.ai.edge.litert", module = "litert-support-api")
+}
 android {
     namespace = "com.example.chauoi"
     compileSdk = 37
 
     buildFeatures {
         buildConfig = true
+        mlModelBinding = true
     }
 
     defaultConfig {
@@ -47,6 +50,8 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
+    implementation(libs.tensorflow.lite.metadata)
+    implementation(libs.tensorflow.lite.support)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
@@ -55,6 +60,10 @@ dependencies {
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    //lifecycle
+    // lifecycle
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    // MediaPipe Text Embedder
+    implementation("com.google.mediapipe:tasks-text:0.10.14")
+    // Thêm đoạn này để xử lý xung đột litert-support
+    implementation("com.google.ai.edge.litert:litert-support:1.0.1")
 }
