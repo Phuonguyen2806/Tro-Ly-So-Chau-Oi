@@ -475,6 +475,7 @@ class ScreenReaderService : AccessibilityService() {
         return result
     }
 
+
     private fun collectAllText(node: AccessibilityNodeInfo): String {
         val sb = StringBuilder()
         node.text?.let { sb.append(it).append(" ") }
