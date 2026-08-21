@@ -20,6 +20,7 @@ import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.cardview.widget.CardView
+import android.widget.TextView
 import com.example.chauoi.R
 import com.example.chauoi.ai.GeminiHelper
 import com.example.chauoi.ai.AIIntentMatcher
@@ -76,6 +77,9 @@ class ScreenReaderService : AccessibilityService() {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+        // THÊM DÒNG NÀY ĐỂ CLEAR TRẠNG THÁI MỖI KHI CHẠY LẠI APP/SERVICE
+        getSharedPreferences("chau_oi_prefs", MODE_PRIVATE).edit().clear().apply()
+
         val info = AccessibilityServiceInfo().apply {
             eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or
                     AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
@@ -176,6 +180,28 @@ class ScreenReaderService : AccessibilityService() {
     }
 
     @SuppressLint("ClickableViewAccessibility")
+    /**
+     * Tự động hiện bong bóng chữ cạnh 2 nút thật (không cần ông bà bấm icon hướng dẫn nào cả),
+     * kèm đọc giọng nói. Mỗi "dấu mốc" (lần đầu chung, hoặc lần đầu vào từng app) chỉ hiện 1 lần.
+     * Tự ẩn sau 6 giây.
+     */
+    private fun hienThiGoiYNutBongBongNeuCan(danhDauMoc: String, cauNoi: String) {
+        val prefs = getSharedPreferences("chau_oi_prefs", MODE_PRIVATE)
+        val key = "da_goi_y_nut_$danhDauMoc"
+        if (prefs.getBoolean(key, false)) return
+        prefs.edit().putBoolean(key, true).apply()
+
+//        val tvHintHoi = floatingView?.findViewById<TextView>(R.id.tvHintHoi)
+//        val tvHintTheoDoi = floatingView?.findViewById<TextView>(R.id.tvHintTheoDoi)
+//        tvHintHoi?.visibility = View.VISIBLE
+//        tvHintTheoDoi?.visibility = View.VISIBLE
+//        ttsManager.speak(cauNoi)
+//
+//        Handler(Looper.getMainLooper()).postDelayed({
+//            tvHintHoi?.visibility = View.GONE
+//            tvHintTheoDoi?.visibility = View.GONE
+//        }, 6000L)
+    }
     private fun initFloatingMicrophone() {
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         val inflater = LayoutInflater.from(this)
@@ -208,9 +234,14 @@ class ScreenReaderService : AccessibilityService() {
 
         try {
             windowManager.addView(floatingView, layoutParams)
-        } catch (e: Exception) { }
+            // Tự động hiện bong bóng gợi ý ngay khi 2 nút vừa xuất hiện, không cần bấm icon hướng dẫn nào
+            hienThiGoiYNutBongBongNeuCan(
+                "lan_dau_chung",
+                "Chào ông bà, đây là 2 nút trợ lý của Cháu Ơi. Nút cam bên trên để hỏi, nút xám bên dưới để cháu xem màn hình ạ."
+            )
+        } catch (e: Exception) {
+        }
     }
-
     @SuppressLint("ClickableViewAccessibility")
     private fun ganKeoThaVaCham(view: View?, onTap: () -> Unit) {
         var initialX = 0
@@ -324,12 +355,22 @@ class ScreenReaderService : AccessibilityService() {
                     if (packageName != currentPackageName) {
                         currentPackageName = packageName
                         ttsManager.speak(dichVu.cauChaoMung)
+                        hienThiGoiYNutBongBongNeuCan(
+                            "lan_dau_${packageName}",
+                            "Ông bà chạm nút cam bên trên để hỏi, hoặc chạm nút xám bên dưới để cháu xem màn hình và hướng dẫn nhé."
+                        )
                     } else {
                         ttsManager.speak(dichVu.cauNhanChuyenManHinh)
                     }
                     lastEventTime = currentTime
                 }
             } else {
+                // Ông bà đã rời app được hỗ trợ (về màn hình chính hoặc app khác)
+                // -> Xóa mục đích cũ, tránh mục đích lần trước lẫn sang lần dùng sau
+                if (currentPackageName != packageName) {
+                    PhienLamViec.mucDichHienTai = null
+                    PhienLamViec.cauHoiGhiAmTamThoi = null
+                }
                 currentPackageName = packageName
             }
         }
@@ -358,7 +399,7 @@ class ScreenReaderService : AccessibilityService() {
         }
 
         dangHoiAI = true
-        val mucDich = PhienLamViec.mucDichHienTai ?: "không rõ"
+        val mucDich = PhienLamViec.mucDichHienTai ?: "ông bà chưa nói rõ, hãy dựa vào toàn bộ nội dung màn hình để đoán việc cần làm tiếp theo"
 
         serviceScope.launch {
             try {
