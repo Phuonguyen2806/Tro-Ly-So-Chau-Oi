@@ -175,7 +175,7 @@ class ScreenReaderService : AccessibilityService() {
                     } else {
                         // Câu hỏi tự do -> Lưu câu hỏi, bảo ng dùng bấm mắt để quét
                         PhienLamViec.cauHoiGhiAmTamThoi = sentence
-                        ttsManager.speak("Ông bà hãy chạm vào nút hình con mắt ở trên, để cháu xem màn hình và hướng dẫn nhé.")
+                        ttsManager.speak("Ông bà hãy chạm vào nút hình con mắt ở dưới, để cháu xem màn hình và hướng dẫn nhé.")
                     }
                 },
                 onErrorMsg = { error ->
@@ -202,16 +202,16 @@ class ScreenReaderService : AccessibilityService() {
         if (prefs.getBoolean(key, false)) return
         prefs.edit().putBoolean(key, true).apply()
 
-//        val tvHintHoi = floatingView?.findViewById<TextView>(R.id.tvHintHoi)
-//        val tvHintTheoDoi = floatingView?.findViewById<TextView>(R.id.tvHintTheoDoi)
-//        tvHintHoi?.visibility = View.VISIBLE
-//        tvHintTheoDoi?.visibility = View.VISIBLE
-//        ttsManager.speak(cauNoi)
-//
-//        Handler(Looper.getMainLooper()).postDelayed({
-//            tvHintHoi?.visibility = View.GONE
-//            tvHintTheoDoi?.visibility = View.GONE
-//        }, 6000L)
+        val tvHintHoi = floatingView?.findViewById<TextView>(R.id.tvHintHoi)
+        val tvHintTheoDoi = floatingView?.findViewById<TextView>(R.id.tvHintTheoDoi)
+        tvHintHoi?.visibility = View.VISIBLE
+        tvHintTheoDoi?.visibility = View.VISIBLE
+        ttsManager.speak(cauNoi)
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            tvHintHoi?.visibility = View.GONE
+            tvHintTheoDoi?.visibility = View.GONE
+        }, 6000L)
     }
 
 
