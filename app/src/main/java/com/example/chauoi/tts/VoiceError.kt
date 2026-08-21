@@ -6,7 +6,7 @@ class VoiceError {
     private val complaintKeywords = listOf(
         "chưa được", "sai rồi", "nói lại", "không đúng",
         "khác rồi", "cháu ơi chưa được", "hướng dẫn lại", "nhầm rồi",
-        "vẫn thế", "không phải", "đâu ra", "làm sao", "lại sai", "trật lất"
+        "vẫn thế", "không phải", "đâu ra", "làm sao", "lại sai", "trật lất","chưa hiểu","chưa rõ"
     )
 
     /**
