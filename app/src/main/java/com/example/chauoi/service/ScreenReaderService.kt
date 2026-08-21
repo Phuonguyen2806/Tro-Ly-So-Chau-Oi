@@ -152,25 +152,19 @@ class ScreenReaderService : AccessibilityService() {
 
                     val dichVuPhuHop = aiIntentMatcher.timAppPhuHop(clean, dsDichVu)
 
+
                     if (dichVuPhuHop != null) {
                         if (currentPackageName == dichVuPhuHop.tenPackage) {
-                            // Đang trong app rồi -> Nếu câu nói mới khớp đúng 1 mục đích cụ thể thì CẬP NHẬT lại
-                            // (trước đây mucDichHienTai chỉ set 1 lần lúc mở app, không đổi khi ông bà đổi ý giữa phiên)
-                            val mucDichMoi = dichVuPhuHop.mucDich.find { md ->
-                                md.tuKhoaGiongNoi.any { clean.contains(it) }
-                            }
-                            if (mucDichMoi != null) {
-                                PhienLamViec.mucDichHienTai = mucDichMoi.id
-                            }
+                            // Đang trong app rồi -> Lưu câu hỏi, bảo ng dùng bấm mắt để quét
                             PhienLamViec.cauHoiGhiAmTamThoi = sentence
                             ttsManager.speak("Ông bà hãy chạm vào nút hình con mắt ở dưới, để cháu quét màn hình này và trả lời nhé.")
                         } else {
                             // Mở app mới (Thiết lập mục đích mặc định là chung do cấu hình đã tinh giản)
                             PhienLamViec.mucDichHienTai = "chung"
 
+
                             ttsManager.speak(dichVuPhuHop.cauPhanHoiKhiMo)
-                            val intent =
-                                packageManager.getLaunchIntentForPackage(dichVuPhuHop.tenPackage)
+                            val intent = packageManager.getLaunchIntentForPackage(dichVuPhuHop.tenPackage)
                             if (intent != null) {
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 startActivity(intent)
@@ -181,7 +175,7 @@ class ScreenReaderService : AccessibilityService() {
                     } else {
                         // Câu hỏi tự do -> Lưu câu hỏi, bảo ng dùng bấm mắt để quét
                         PhienLamViec.cauHoiGhiAmTamThoi = sentence
-                        ttsManager.speak("Ông bà hãy chạm vào nút hình con mắt ở dưới, để cháu xem màn hình và hướng dẫn nhé.")
+                        ttsManager.speak("Ông bà hãy chạm vào nút hình con mắt ở trên, để cháu xem màn hình và hướng dẫn nhé.")
                     }
                 },
                 onErrorMsg = { error ->
@@ -193,6 +187,7 @@ class ScreenReaderService : AccessibilityService() {
             Log.e(TAG, "Không thể khởi tạo SpeechRecognizer", e)
         }
     }
+
 
     @SuppressLint("ClickableViewAccessibility")
 
@@ -207,16 +202,16 @@ class ScreenReaderService : AccessibilityService() {
         if (prefs.getBoolean(key, false)) return
         prefs.edit().putBoolean(key, true).apply()
 
-        val tvHintHoi = floatingView?.findViewById<TextView>(R.id.tvHintHoi)
-        val tvHintTheoDoi = floatingView?.findViewById<TextView>(R.id.tvHintTheoDoi)
-        tvHintHoi?.visibility = View.VISIBLE
-        tvHintTheoDoi?.visibility = View.VISIBLE
-        ttsManager.speak(cauNoi)
-
-        Handler(Looper.getMainLooper()).postDelayed({
-            tvHintHoi?.visibility = View.GONE
-            tvHintTheoDoi?.visibility = View.GONE
-        }, 6000L)
+//        val tvHintHoi = floatingView?.findViewById<TextView>(R.id.tvHintHoi)
+//        val tvHintTheoDoi = floatingView?.findViewById<TextView>(R.id.tvHintTheoDoi)
+//        tvHintHoi?.visibility = View.VISIBLE
+//        tvHintTheoDoi?.visibility = View.VISIBLE
+//        ttsManager.speak(cauNoi)
+//
+//        Handler(Looper.getMainLooper()).postDelayed({
+//            tvHintHoi?.visibility = View.GONE
+//            tvHintTheoDoi?.visibility = View.GONE
+//        }, 6000L)
     }
 
 
@@ -361,7 +356,7 @@ private fun thucHienQuetManHinhMotLan() {
     currentTextContent = semanticTree
 
     // 🚀 CHUYỂN LUỒNG 100% SANG AI: Bỏ qua JSON, gửi thẳng cho Gemini AI quét tự do
-    xuLyManHinhBangAI(dichVu, semanticTree)
+    xuLyManHinhBangAI(dichVu.tenGoi, semanticTree)
 }
 
 override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -398,13 +393,11 @@ override fun onAccessibilityEvent(event: AccessibilityEvent?) {
     }
 }
 
-private fun xuLyManHinhBangAI(dichVu: CauHinhDichVu, noiDungManHinh: String) {
-    val tenDichVu = dichVu.tenGoi
+private fun xuLyManHinhBangAI(tenDichVu: String, noiDungManHinh: String) {
     val cauHoi = PhienLamViec.cauHoiGhiAmTamThoi
     // Nếu là phàn nàn, gắn thêm từ khóa "COMPLAINT" vào khóa băm để ép hệ thống tạo mới hoàn toàn
     val isComplaint = cauHoi != null && voiceErrorChecker.isUserComplaining(cauHoi)
-    val hashSuffix =
-        if (isComplaint) ":COMPLAINT:${System.currentTimeMillis()}" else ":${cauHoi ?: ""}"
+    val hashSuffix = if (isComplaint) ":COMPLAINT:${System.currentTimeMillis()}" else ":${cauHoi ?: ""}"
     val hashKey = tenDichVu + ":" + noiDungManHinh.replace(Regex("\\d+"), "#") + hashSuffix
     val screenHash = hashKey.hashCode()
     // Nếu không phải phàn nàn thì mới check cache cũ
@@ -425,14 +418,12 @@ private fun xuLyManHinhBangAI(dichVu: CauHinhDichVu, noiDungManHinh: String) {
     dangHoiAI = true
     // Chuyển ID mục đích (vd: "xem_gplx") sang tên gọi con người đọc được (vd: "Xem giấy phép lái xe")
     // Trước đây gửi thẳng ID kỹ thuật khiến Gemini không hiểu, hay trả lời "chưa rõ màn hình"
-    val mucDich = dichVu.mucDich.find { it.id == PhienLamViec.mucDichHienTai }?.tenGoi
-        ?: "ông bà chưa nói rõ, hãy dựa vào toàn bộ nội dung màn hình để đoán việc cần làm tiếp theo"
+    val mucDich = PhienLamViec.mucDichHienTai ?: "ông bà chưa nói rõ, hãy dựa vào toàn bộ nội dung màn hình để đoán việc cần làm tiếp theo"
 
     serviceScope.launch {
         try {
             // ĐƯA CÂU HỎI HOẶC LỜI PHÀN NÀN VÀO PROMPT ĐỂ AI BIẾT ĐƯỜNG SỬA ĐỔI
-            val contextCauHoi =
-                if (cauHoi != null) "\nLƯU Ý QUAN TRỌNG TỪ ÔNG BÀ (CẦN SỬA ĐỔI NGAY): $cauHoi" else ""
+            val contextCauHoi = if (cauHoi != null) "\nLƯU Ý QUAN TRỌNG TỪ ÔNG BÀ (CẦN SỬA ĐỔI NGAY): $cauHoi" else ""
             val prompt = """
                     Ứng dụng: $tenDichVu | Mục tiêu: $mucDich $contextCauHoi
                     Toàn bộ nội dung màn hình (gồm cả nút bấm, ô nhập, thông tin):
