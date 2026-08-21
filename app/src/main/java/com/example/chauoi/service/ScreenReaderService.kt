@@ -94,23 +94,10 @@ class ScreenReaderService : AccessibilityService() {
 
         dsDichVu = DichVuLoader.taiTatCa(this)
         ttsManager = TextToSpeechManager(this)
+        aiIntentMatcher = AIIntentMatcher(this)
         voiceErrorChecker = VoiceError()
         initSpeechRecognizer()
         initFloatingMicrophone()
-        huongDanLanDauNeuCan()
-    }
-
-    private fun huongDanLanDauNeuCan() {
-        val prefs = getSharedPreferences("chau_oi_prefs", MODE_PRIVATE)
-        if (prefs.getBoolean("da_huong_dan_su_dung", false)) return
-        Handler(Looper.getMainLooper()).postDelayed({
-            ttsManager.speak(
-                "Chào ông bà, đây là 2 nút trợ lý của Cháu Ơi ạ. " +
-                        "Khi muốn hỏi, ông bà chạm nút micro bên trên. " +
-                        "Sau đó, chạm nút con mắt bên dưới để cháu quét màn hình và hướng dẫn nhé."
-            )
-        }, 1500L)
-        prefs.edit().putBoolean("da_huong_dan_su_dung", true).apply()
     }
 
     private fun initSpeechRecognizer() {
