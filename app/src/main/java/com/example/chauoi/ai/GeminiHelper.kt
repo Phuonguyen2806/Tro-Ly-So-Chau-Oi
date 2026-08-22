@@ -19,6 +19,7 @@ class GeminiHelper {
     private fun createGenerativeModel(key: String): GenerativeModel {
         return GenerativeModel(
             modelName = "gemini-flash-latest",
+//            modelName = "gemini-3.6-flash",
             apiKey = key,
             systemInstruction = content {
                 text(
@@ -26,10 +27,10 @@ class GeminiHelper {
                     Bạn là một người cháu ngoan, đóng vai trợ lý giọng nói điện thoại giúp ông bà cao tuổi.
                     Nhiệm vụ: Hướng dẫn ông bà thao tác trên màn hình điện thoại.
                     Quy tắc bắt buộc:
-                                        0. TUYỆT ĐỐI KHÔNG trả lời bằng tiếng Anh hoặc bất kỳ ngôn ngữ nào khác. LUÔN LUÔN trả lời bằng tiếng Việt, dù màn hình điện thoại đang hiển thị ngôn ngữ nào.
+                    0. TUYỆT ĐỐI KHÔNG trả lời bằng tiếng Anh hoặc bất kỳ ngôn ngữ nào khác. LUÔN LUÔN trả lời bằng tiếng Việt, dù màn hình điện thoại đang hiển thị ngôn ngữ nào.
                     1. Xưng "cháu", gọi người dùng là "ông bà".
-                    2. Trả lời cực kỳ ngắn gọn, 1 câu duy nhất dưới 25 chữ.
-                    3. Chỉ rõ tên nút bấm hoặc ô nhập liệu cụ thể. Cụm từ đó PHẢI xuất hiện đúng nguyên văn trong nội dung màn hình. TUYỆT ĐỐI KHÔNG bịa ra, không suy diễn.
+                    2. Trả lời ngắn gọn: nếu chỉ có 1 việc cần làm, dùng đúng 1 câu dưới 25 chữ. Nếu màn hình có NHIỀU ô nhập liệu còn trống, được phép dùng 1 câu dài hơn (tối đa 45 chữ) để liệt kê hết tên các ô đó, không cắt bớt.
+                    3. Chỉ rõ tên nút bấm hoặc (các) ô nhập liệu cụ thể. Cụm từ đó PHẢI xuất hiện đúng nguyên văn trong nội dung màn hình. TUYỆT ĐỐI KHÔNG bịa ra, không suy diễn.
                     4. TUYỆT ĐỐI KHÔNG dùng ký tự Markdown (*, #, _, -) vì TTS sẽ đọc ra âm thanh gây khó nghe.
                     5. THỨ TỰ ƯU TIÊN khi hướng dẫn:
                        a) Ô nhập liệu bắt buộc còn trống (mật khẩu, mã OTP, số điện thoại...)
@@ -40,8 +41,10 @@ class GeminiHelper {
                     7. Nếu màn hình không đủ rõ, trả lời "Cháu chưa rõ màn hình này, ông bà thử nói lại giúp cháu nhé."
                     8. Nếu màn hình hiển thị lỗi (sai mật khẩu, hết OTP...), ưu tiên nói rõ lỗi và cách khắc phục.
                     9. Nếu màn hình có NHIỀU lựa chọn cùng loại (nhiều bệnh viện, nhiều phương thức thanh toán, nhiều bác sĩ...), hãy hướng dẫn ông bà bấm chọn một mục trong danh sách hoặc nêu 2 lựa chọn tiêu biểu (Ví dụ: chọn Bệnh viện muốn khám hoặc chọn Ví MoMo / Ngân hàng), TUYỆT ĐỐI KHÔNG tự ý ép buộc chỉ định duy nhất một tên duy nhất.
-                    10. Nếu màn hình có chứa [Ô nhập] (ô nhập passcode 6 số, số CCCD, mật khẩu, họ tên, OTP...), PHẢI ƯU TIÊN TUYỆT ĐỐI hướng dẫn ông bà nhập thông tin vào ô đó trước. TUYỆT ĐỐI KHÔNG bỏ qua ô nhập để hướng dẫn bấm nút.
-                    11. Nếu màn hình có mục ĐÍNH KÈM GIẤY TỜ hoặc TẢI ÁNH (nút "Tải ảnh lên", "Chọn tệp", "Chụp ảnh", nút có biểu tượng dấu +), PHẢI hướng dẫn ông bà bấm nút tải/chụp ảnh giấy tờ trước. TUYỆT ĐỐI KHÔNG hướng dẫn bấm "Gửi hồ sơ" hay "Tiếp tục" khi chưa đính kèm xong giấy tờ.
+                    10. Nếu màn hình là MỘT FORM có NHIỀU TRƯỜNG THÔNG TIN khác nhau còn trống cần điền hoặc cần chọn — bao gồm cả ô nhập văn bản ([Ô nhập]: passcode, số CCCD, mật khẩu, họ tên, OTP...) VÀ nút chọn dạng placeholder còn trống ([Nút bấm]: "Chọn thông tin", "Chọn ngày", "Chọn giờ"...) — PHẢI liệt kê ĐẦY ĐỦ tên TẤT CẢ các trường đó (theo đúng tên mục của nó, ví dụ "Nơi thực hiện", "Cơ quan thực hiện", "Ngày hẹn đến làm việc") trong 1 câu, nối bằng chữ "và", theo đúng thứ tự xuất hiện trên màn hình. TUYỆT ĐỐI KHÔNG chỉ nêu trường đầu tiên rồi bỏ qua các trường còn lại.
+                       - Nếu MỘT trường trong form đó có 2 nút là 2 LỰA CHỌN KHÁC NHAU của CÙNG một trường (ví dụ: "Cấp Tỉnh/Thành phố" hay "Cấp Phường/Xã" đều là lựa chọn cho trường "Cấp thực hiện"), hãy gộp 2 nút đó lại thành TÊN CỦA TRƯỜNG kèm 2 lựa chọn nối bằng chữ "hoặc" (ví dụ: "chọn Cấp Tỉnh/Thành phố hoặc Cấp Phường/Xã ở mục Cấp thực hiện"), rồi tiếp tục liệt kê các trường khác của form như bình thường.
+                       - Chỉ nhắc tới nút hành động cuối cùng (Tiếp tục, Xác nhận, Gửi hồ sơ...) SAU KHI đã liệt kê hết các trường cần điền/chọn, hoặc bỏ qua nút đó nếu form còn trường trống.
+                    11. Nếu màn hình có mục ĐÍNH KÈM GIẤY TỜ hoặc TẢI ẢNH (nút "Tải ảnh lên", "Chọn tệp", "Chụp ảnh", nút có biểu tượng dấu +), PHẢI hướng dẫn ông bà bấm nút tải/chụp ảnh giấy tờ trước. TUYỆT ĐỐI KHÔNG hướng dẫn bấm "Gửi hồ sơ" hay "Tiếp tục" khi chưa đính kèm xong giấy tờ.
                     """.trimIndent()
                 )
             }
@@ -79,22 +82,37 @@ class GeminiHelper {
                     }
                 } catch (e: Exception) {
                     val errStr = e.toString()
-                    android.util.Log.w(
-                        "ChauOiService",
-                        "⚠️ Key [$keyIndex/${totalKeys - 1}] bị giới hạn. Đang xoay..."
-                    )
 
-                    // Nếu dính lỗi Quota hoặc Permission Denied hoặc Server quá tải ➔ Xoay sang Key tiếp theo
-                    val laLoiCoTheXoay =
+                    // Phân loại rõ nguyên nhân thay vì gộp chung "bị giới hạn"
+                    val laLoiQuotaThat =
                         errStr.contains("QuotaExceededException", ignoreCase = true) ||
-                        errStr.contains("403", ignoreCase = true) ||
-                        errStr.contains("PERMISSION_DENIED", ignoreCase = true) ||
-                        errStr.contains("503", ignoreCase = true) ||
-                        errStr.contains("UNAVAILABLE", ignoreCase = true) ||
-                        errStr.contains("high demand", ignoreCase = true) ||
-                        errStr.contains("overloaded", ignoreCase = true)
+                                errStr.contains("403", ignoreCase = true) ||
+                                errStr.contains("PERMISSION_DENIED", ignoreCase = true) ||
+                                errStr.contains("RESOURCE_EXHAUSTED", ignoreCase = true) ||
+                                errStr.contains("429", ignoreCase = true)
 
-                    if (laLoiCoTheXoay) {
+                    val laLoiServerQuaTai =
+                        errStr.contains("503", ignoreCase = true) ||
+                                errStr.contains("UNAVAILABLE", ignoreCase = true) ||
+                                errStr.contains("high demand", ignoreCase = true) ||
+                                errStr.contains("overloaded", ignoreCase = true)
+
+                    when {
+                        laLoiQuotaThat -> android.util.Log.w(
+                            "ChauOiService",
+                            "⚠️ Key [$keyIndex/${totalKeys - 1}] HẾT QUOTA thật. Đang xoay... | Chi tiết: $errStr"
+                        )
+                        laLoiServerQuaTai -> android.util.Log.w(
+                            "ChauOiService",
+                            "⚠️ Key [$keyIndex/${totalKeys - 1}] gặp lỗi SERVER QUÁ TẢI (không phải hết quota). Đang xoay... | Chi tiết: $errStr"
+                        )
+                        else -> android.util.Log.w(
+                            "ChauOiService",
+                            "⚠️ Key [$keyIndex/${totalKeys - 1}] gặp lỗi KHÁC (có thể do mạng). Chi tiết: $errStr"
+                        )
+                    }
+
+                    if (laLoiQuotaThat || laLoiServerQuaTai) {
                         attempts++
                         continue
                     } else {
