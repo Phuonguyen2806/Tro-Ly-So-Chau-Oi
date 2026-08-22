@@ -51,7 +51,7 @@ class ScreenReaderService : AccessibilityService() {
         private val MAU_HOI_RANH = 0xFFFF7043.toInt()
         private val MAU_HOI_DANG_GHI_AM = 0xFF4CAF50.toInt()
 
-
+        var cauTraLoiMoiNhat: String? = null // Lưu lại chính xác câu AI vừa đọc
         // Chia sẻ Cache ra ngoài để khi người dùng phàn nàn có thể xóa sạch cache màn hình cũ
         val screenResponseCache = LruCache<Int, String>(50)
     }
@@ -129,11 +129,33 @@ class ScreenReaderService : AccessibilityService() {
                             val hashKey = activePackage + ":" + currentTextContent.replace(Regex("\\d+"), "#") + ":COMPLAINT"
                             screenResponseCache.remove(hashKey.hashCode())
                         }
-                        PhienLamViec.cauHoiGhiAmTamThoi = "Ông bà vừa báo bước trước bị sai ($sentence). Hãy nhìn lại màn hình và đổi hướng dẫn khác dễ hiểu hơn."
+                        val cauTruoc = cauTraLoiMoiNhat ?: "Chưa có hướng dẫn trước"
+                        PhienLamViec.cauHoiGhiAmTamThoi = """
+                            [CẢNH BÁO SỬA SAI]: 
+                            - Hướng dẫn vừa đưa ra trước đó: "$cauTruoc"
+                            - Phản hồi từ người dùng: "$sentence" (Báo bước trước bị sai hoặc không làm được).
+                            - YÊU CẦU: Nhìn lại toàn bộ giao diện màn hình hiện tại. Bỏ qua hướng dẫn cũ. Hãy tìm nút bấm hoặc ô nhập liệu khác phù hợp hơn, hướng dẫn lại ngắn gọn, thật dễ hiểu cho người lớn tuổi.
+                        """.trimIndent()
                         kichHoatQuetManHinh()
                         return@SpeechRecognitionManager
                     }
-
+                    // KIỂM TRA YÊU CẦU ĐỌC LẠI -> TỰ ĐỘNG QUÉT VÀ ĐỌC LẠI TỪ CACHE (Không bắt bấm nút con mắt)
+                    if (voiceErrorChecker.isUserAskingToRepeat(sentence)) {
+                        val cauCu = cauTraLoiMoiNhat
+                        if (!cauCu.isNullOrBlank()) {
+                            Log.d(TAG, "🔊 Phát lại ngay câu trả lời gần nhất cho người dùng")
+                            ttsManager.speak(cauCu)
+                        } else {
+                            // Trường hợp chưa có câu trả lời nào trước đó thì mới quét
+                            kichHoatQuetManHinh()
+                        }
+                        return@SpeechRecognitionManager
+                    }
+                    // CÁC CÂU HỎI BÌNH THƯỜNG -> LƯU CÂU HỎI VÀ HƯỚNG DẪN BẤM NÚT CON MẮT ĐỂ QUÉT
+                    val activePackage = rootInActiveWindow?.packageName?.toString()
+                    if (activePackage != null) {
+                        currentPackageName = activePackage
+                    }
                     // 🟢 ĐÃ TÁCH BIỆT HOÀN TOÀN KHỎI ĐIỀU HƯỚNG APP 🟢
                     // Dù người dùng nói gì ở nút trôi nổi, ta cũng chỉ coi là hỏi về màn hình hiện tại. Không bao giờ nhảy app.
                     PhienLamViec.cauHoiGhiAmTamThoi = sentence
@@ -418,6 +440,8 @@ class ScreenReaderService : AccessibilityService() {
 
                 if (huongDan.isNotEmpty() && !huongDan.contains("quá tải") && !isComplaint) {
                     screenResponseCache.put(screenHash, huongDan)
+                    // LƯU LẠI CÂU AI VỪA ĐỌC ĐỂ DÙNG KHI NGƯỜI DÙNG BẢO "ĐỌC LẠI"
+                    cauTraLoiMoiNhat = huongDan
                 }
 
                 ttsManager.speak(huongDan)
