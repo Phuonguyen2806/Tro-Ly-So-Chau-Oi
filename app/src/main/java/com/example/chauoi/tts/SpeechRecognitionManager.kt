@@ -11,6 +11,8 @@ import java.util.Locale
 
 class SpeechRecognitionManager(
     private val context: Context,
+    private val onReady: () -> Unit,
+    private val onSpeechEnded: () -> Unit,
     private val onResult: (String) -> Unit,
     private val onErrorMsg: (String) -> Unit = {}
 ) {
@@ -19,6 +21,7 @@ class SpeechRecognitionManager(
     }
 
     private var speechRecognizer: SpeechRecognizer? = null
+    public var isListening = false
     private val recognizerIntent: Intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
         putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
         putExtra(RecognizerIntent.EXTRA_LANGUAGE, "vi-VN") // Nhận diện tiếng Việt chuẩn
@@ -30,6 +33,8 @@ class SpeechRecognitionManager(
     private val listener = object : RecognitionListener {
         override fun onReadyForSpeech(params: Bundle?) {
             Log.d(TAG, "🎙️ Bắt đầu lắng nghe giọng nói...")
+            isListening = true
+            onReady()
         }
 
         override fun onBeginningOfSpeech() {
@@ -42,9 +47,11 @@ class SpeechRecognitionManager(
 
         override fun onEndOfSpeech() {
             Log.d(TAG, "🎙️ Đã nói xong, đang phân tích...")
+            onSpeechEnded()
         }
 
         override fun onError(error: Int) {
+            isListening = false
             val message = when (error) {
                 SpeechRecognizer.ERROR_AUDIO -> "Lỗi âm thanh"
                 SpeechRecognizer.ERROR_CLIENT -> "Lỗi kết nối client"
@@ -61,6 +68,7 @@ class SpeechRecognitionManager(
         }
 
         override fun onResults(results: Bundle?) {
+            isListening = false
             val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
             if (!matches.isNullOrEmpty()) {
                 val bestMatch = matches[0]
@@ -90,9 +98,15 @@ class SpeechRecognitionManager(
      */
     fun startListening() {
         try {
+            if (isListening) {
+                speechRecognizer?.cancel()
+                Log.d(TAG, "⚠️ Đang nghe dở, hủy phiên cũ trước khi bắt đầu phiên mới")
+            }
             speechRecognizer?.startListening(recognizerIntent)
+            isListening = true
         } catch (e: Exception) {
             Log.e(TAG, "Lỗi bắt đầu ghi âm", e)
+            isListening = false
         }
     }
 
@@ -101,6 +115,7 @@ class SpeechRecognitionManager(
      */
     fun stopListening() {
         speechRecognizer?.stopListening()
+        isListening = false
     }
 
     /**
@@ -109,5 +124,6 @@ class SpeechRecognitionManager(
     fun destroy() {
         speechRecognizer?.destroy()
         speechRecognizer = null
+        isListening = false
     }
 }

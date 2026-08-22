@@ -74,6 +74,7 @@ class ScreenReaderService : AccessibilityService() {
     private var currentTextContent: String = ""
     private var currentPackageName: String = ""
     private var lastEventTime = 0L
+    private val micHandler = Handler(Looper.getMainLooper())
 
 
     override fun onServiceConnected() {
@@ -104,66 +105,39 @@ class ScreenReaderService : AccessibilityService() {
         try {
             speechManager = SpeechRecognitionManager(
                 context = this,
+                onReady = {
+                    val cardHoi = floatingView?.findViewById<CardView>(R.id.cardHoi)
+                    cardHoi?.setCardBackgroundColor(MAU_HOI_DANG_GHI_AM)
+                },
+                onSpeechEnded = {
+                    resetNutHoiUi()
+                },
                 onResult = { sentence ->
                     val clean = sentence.lowercase()
                     Log.d(TAG, "🎙️ Service nghe thấy lệnh: \"$clean\"")
                     resetNutHoiUi()
 
-                    // BƯỚC 1: KIỂM TRA PHÀN NÀN & XÓA SẠCH CACHE MÀN HÌNH HIỆN TẠI
+                    // Lọc tiếng vọng
+                    if (clean.contains("con mắt ở dưới") || clean.contains("đang xem màn hình") || clean.contains("đợi một lát")) {
+                        return@SpeechRecognitionManager
+                    }
+
+                    // KIỂM TRA PHÀN NÀN
                     if (voiceErrorChecker.isUserComplaining(sentence)) {
-                        Log.d(TAG, "Phát hiện phàn nàn trong Service: $sentence")
-
-                        // Xóa cache màn hình hiện tại (nếu có lưu) để ép AI quét và đưa ra hướng dẫn mới
                         if (currentTextContent.isNotBlank()) {
-                            val activePackage =
-                                rootInActiveWindow?.packageName?.toString() ?: "chung"
-
-                            val hashKey = activePackage + ":" + currentTextContent.replace(
-                                Regex("\\d+"),
-                                "#"
-                            ) + ":COMPLAINT"
-                            val screenHash = hashKey.hashCode()
-                            screenResponseCache.remove(screenHash)
+                            val activePackage = rootInActiveWindow?.packageName?.toString() ?: "chung"
+                            val hashKey = activePackage + ":" + currentTextContent.replace(Regex("\\d+"), "#") + ":COMPLAINT"
+                            screenResponseCache.remove(hashKey.hashCode())
                         }
-                        // Ép lưu câu hỏi tạm thời với nội dung cảnh báo AI sửa sai
-                        PhienLamViec.cauHoiGhiAmTamThoi =
-                            "Ông bà vừa báo bước trước bị sai ($sentence). Hãy nhìn lại màn hình và đổi hướng dẫn khác dễ hiểu hơn."
+                        PhienLamViec.cauHoiGhiAmTamThoi = "Ông bà vừa báo bước trước bị sai ($sentence). Hãy nhìn lại màn hình và đổi hướng dẫn khác dễ hiểu hơn."
                         kichHoatQuetManHinh()
                         return@SpeechRecognitionManager
                     }
-                    // BƯỚC 2: XỬ LÝ LỆNH THƯỜNG / TÌM DỊCH VỤ DỰA TRÊN AI
-                    val activePackage = rootInActiveWindow?.packageName?.toString()
-                    if (activePackage != null) {
-                        currentPackageName = activePackage
-                    }
 
-                    val dichVuPhuHop = aiIntentMatcher.timAppPhuHop(clean, dsDichVu)
-
-
-                    if (dichVuPhuHop != null) {
-                        if (currentPackageName == dichVuPhuHop.tenPackage) {
-                            // Đang trong app rồi -> Lưu câu hỏi, bảo ng dùng bấm mắt để quét
-                            PhienLamViec.cauHoiGhiAmTamThoi = sentence
-                            ttsManager.speak("Ông bà hãy chạm vào nút hình con mắt ở dưới, để cháu quét màn hình này và trả lời nhé.")
-                        } else {
-                            // Mở app mới (Thiết lập mục đích mặc định là chung do cấu hình đã tinh giản)
-                            PhienLamViec.mucDichHienTai = "chung"
-
-
-                            ttsManager.speak(dichVuPhuHop.cauPhanHoiKhiMo)
-                            val intent = packageManager.getLaunchIntentForPackage(dichVuPhuHop.tenPackage)
-                            if (intent != null) {
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                startActivity(intent)
-                            } else {
-                                ttsManager.speak("Ứng dụng này chưa được cài đặt trên thiết bị ạ.")
-                            }
-                        }
-                    } else {
-                        // Câu hỏi tự do -> Lưu câu hỏi, bảo ng dùng bấm mắt để quét
-                        PhienLamViec.cauHoiGhiAmTamThoi = sentence
-                        ttsManager.speak("Ông bà hãy chạm vào nút hình con mắt ở dưới, để cháu xem màn hình và hướng dẫn nhé.")
-                    }
+                    // 🟢 ĐÃ TÁCH BIỆT HOÀN TOÀN KHỎI ĐIỀU HƯỚNG APP 🟢
+                    // Dù người dùng nói gì ở nút trôi nổi, ta cũng chỉ coi là hỏi về màn hình hiện tại. Không bao giờ nhảy app.
+                    PhienLamViec.cauHoiGhiAmTamThoi = sentence
+                    ttsManager.speak("Ông bà hãy chạm vào nút hình con mắt ở dưới, để cháu xem màn hình và trả lời nhé.")
                 },
                 onErrorMsg = { error ->
                     Log.w(TAG, "SpeechRecognizer warning: $error")
@@ -227,9 +201,25 @@ class ScreenReaderService : AccessibilityService() {
 
         ganKeoThaVaCham(cardTheoDoi) { kichHoatQuetManHinh() }
         ganKeoThaVaCham(cardHoi) {
+            // Nếu đang lắng nghe thì bấm lần nữa = TẮT mic, trả về màu cam
+            if (speechManager?.isListening == true) {
+                speechManager?.stopListening()
+                ttsManager.stop()
+                micHandler.removeCallbacksAndMessages(null)
+                resetNutHoiUi()
+                return@ganKeoThaVaCham
+            }
+
+            cardHoi?.isEnabled = false
             ttsManager.stop()
-            cardHoi?.setCardBackgroundColor(MAU_HOI_DANG_GHI_AM)
-            speechManager?.startListening()
+
+            micHandler.removeCallbacksAndMessages(null)
+
+            micHandler.postDelayed({
+                speechManager?.startListening()
+                cardHoi?.isEnabled = true
+            }, 500)
+
         }
 
         try {
@@ -243,315 +233,324 @@ class ScreenReaderService : AccessibilityService() {
         }
     }
 
-@SuppressLint("ClickableViewAccessibility")
-private fun ganKeoThaVaCham(view: View?, onTap: () -> Unit) {
-    var initialX = 0
-    var initialY = 0
-    var initialTouchX = 0f
-    var initialTouchY = 0f
-    var isClick = false
+    @SuppressLint("ClickableViewAccessibility")
+    private fun ganKeoThaVaCham(view: View?, onTap: () -> Unit) {
+        var initialX = 0
+        var initialY = 0
+        var initialTouchX = 0f
+        var initialTouchY = 0f
+        var isClick = false
 
-    view?.setOnTouchListener { _, event ->
-        val layoutParams = floatingLayoutParams ?: return@setOnTouchListener false
-        when (event.action) {
-            MotionEvent.ACTION_DOWN -> {
-                initialX = layoutParams.x
-                initialY = layoutParams.y
-                initialTouchX = event.rawX
-                initialTouchY = event.rawY
-                isClick = true
-                true
-            }
-
-            MotionEvent.ACTION_MOVE -> {
-                val diffX = event.rawX - initialTouchX
-                val diffY = event.rawY - initialTouchY
-                if (abs(diffX) > 50 || abs(diffY) > 50) isClick = false
-                layoutParams.x = initialX + diffX.toInt()
-                layoutParams.y = initialY + diffY.toInt()
-                windowManager.updateViewLayout(floatingView, layoutParams)
-                true
-            }
-
-            MotionEvent.ACTION_UP -> {
-                if (isClick) onTap()
-                true
-            }
-
-            else -> false
-        }
-    }
-}
-
-private fun resetNutHoiUi() {
-    val cardHoi = floatingView?.findViewById<CardView>(R.id.cardHoi)
-    cardHoi?.setCardBackgroundColor(MAU_HOI_RANH)
-}
-
-// LOGIC QUÉT MÀN HÌNH MỚI (1 LẦN VÀ TẮT)
-private fun kichHoatQuetManHinh() {
-    if (dangQuetManHinh) return
-    dangQuetManHinh = true
-    rungPhanHoi()
-
-    val cardTheoDoi = floatingView?.findViewById<CardView>(R.id.cardTheoDoi)
-    cardTheoDoi?.setCardBackgroundColor(MAU_THEO_DOI_BAT)
-
-    if (PhienLamViec.cauHoiGhiAmTamThoi != null) {
-        ttsManager.speak("Cháu đang xem màn hình để trả lời, ông bà đợi một lát nhé.")
-    } else {
-        ttsManager.speak("Cháu đang xem màn hình, ông bà đợi một lát nhé.")
-    }
-
-    thucHienQuetManHinhMotLan()
-}
-
-private fun tatNutTheoDoi() {
-    val cardTheoDoi = floatingView?.findViewById<CardView>(R.id.cardTheoDoi)
-    cardTheoDoi?.setCardBackgroundColor(MAU_THEO_DOI_TAT)
-    dangQuetManHinh = false
-}
-
-private fun thucHienQuetManHinhMotLan() {
-    val rootNode = rootInActiveWindow
-    if (rootNode == null) {
-        ttsManager.speak("Cháu không thấy màn hình nào cả.")
-        tatNutTheoDoi()
-        return
-    }
-
-    val packageName = rootNode.packageName?.toString() ?: ""
-    currentPackageName = packageName
-
-    val dichVu = dsDichVu.find { it.tenPackage == packageName }
-    if (dichVu == null) {
-        ttsManager.speak("Ứng dụng này chưa được cháu hỗ trợ ạ.")
-        rootNode.recycle()
-        tatNutTheoDoi()
-        return
-    }
-
-    val semanticTreeGoc = collectSemanticUITree(rootNode)
-    rootNode.recycle()
-    if (semanticTreeGoc.isBlank()) {
-        ttsManager.speak("Màn hình này trống, cháu không thấy thông tin gì ạ.")
-        tatNutTheoDoi()
-        return
-    }
-
-    val semanticTree = lamSachText(semanticTreeGoc, maxLength = 2000)
-    currentTextContent = semanticTree
-
-    // 🚀 CHUYỂN LUỒNG 100% SANG AI: Bỏ qua JSON, gửi thẳng cho Gemini AI quét tự do
-    xuLyManHinhBangAI(dichVu.tenGoi, semanticTree)
-}
-
-override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-    event ?: return
-    val packageName = event.packageName?.toString() ?: return
-
-    // Chỉ xử lý khi có sự kiện CHUYỂN CỬA SỔ (mở app mới hoặc qua màn hình mới)
-    if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-        val dichVu = dsDichVu.find { it.tenPackage == packageName }
-        if (dichVu != null) {
-            val currentTime = System.currentTimeMillis()
-            if (currentTime - lastEventTime > 4000) {
-                if (packageName != currentPackageName) {
-                    currentPackageName = packageName
-                    ttsManager.speak(dichVu.cauChaoMung)
-                    hienThiGoiYNutBongBongNeuCan(
-                        "lan_dau_${packageName}",
-                        "Ông bà chạm nút cam bên trên để hỏi, hoặc chạm nút xám bên dưới để cháu xem màn hình và hướng dẫn nhé."
-                    )
-                } else {
-                    ttsManager.speak(dichVu.cauNhanChuyenManHinh)
+        view?.setOnTouchListener { _, event ->
+            val layoutParams = floatingLayoutParams ?: return@setOnTouchListener false
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    initialX = layoutParams.x
+                    initialY = layoutParams.y
+                    initialTouchX = event.rawX
+                    initialTouchY = event.rawY
+                    isClick = true
+                    true
                 }
-                lastEventTime = currentTime
+
+                MotionEvent.ACTION_MOVE -> {
+                    val diffX = event.rawX - initialTouchX
+                    val diffY = event.rawY - initialTouchY
+                    if (abs(diffX) > 50 || abs(diffY) > 50) isClick = false
+                    layoutParams.x = initialX + diffX.toInt()
+                    layoutParams.y = initialY + diffY.toInt()
+                    windowManager.updateViewLayout(floatingView, layoutParams)
+                    true
+                }
+
+                MotionEvent.ACTION_UP -> {
+                    if (isClick) onTap()
+                    true
+                }
+
+                else -> false
             }
-        } else {
-            // Ông bà đã rời app được hỗ trợ (về màn hình chính hoặc app khác)
-            // -> Xóa mục đích cũ, tránh mục đích lần trước lẫn sang lần dùng sau
-            if (currentPackageName != packageName) {
-                PhienLamViec.mucDichHienTai = null
-                PhienLamViec.cauHoiGhiAmTamThoi = null
-            }
-            currentPackageName = packageName
         }
     }
-}
 
-private fun xuLyManHinhBangAI(tenDichVu: String, noiDungManHinh: String) {
-    val cauHoi = PhienLamViec.cauHoiGhiAmTamThoi
-    // Nếu là phàn nàn, gắn thêm từ khóa "COMPLAINT" vào khóa băm để ép hệ thống tạo mới hoàn toàn
-    val isComplaint = cauHoi != null && voiceErrorChecker.isUserComplaining(cauHoi)
-    val hashSuffix = if (isComplaint) ":COMPLAINT:${System.currentTimeMillis()}" else ":${cauHoi ?: ""}"
-    val hashKey = tenDichVu + ":" + noiDungManHinh.replace(Regex("\\d+"), "#") + hashSuffix
-    val screenHash = hashKey.hashCode()
-    // Nếu không phải phàn nàn thì mới check cache cũ
-    if (!isComplaint) {
-        val cachedResponse = screenResponseCache.get(screenHash)
-        if (cachedResponse != null) {
-            ttsManager.speak(cachedResponse)
-            PhienLamViec.cauHoiGhiAmTamThoi = null
+    private fun resetNutHoiUi() {
+        val cardHoi = floatingView?.findViewById<CardView>(R.id.cardHoi)
+        cardHoi?.setCardBackgroundColor(MAU_HOI_RANH)
+    }
+
+    // LOGIC QUÉT MÀN HÌNH MỚI (1 LẦN VÀ TẮT)
+    private fun kichHoatQuetManHinh() {
+        if (dangQuetManHinh) return
+        dangQuetManHinh = true
+        rungPhanHoi()
+
+        val cardTheoDoi = floatingView?.findViewById<CardView>(R.id.cardTheoDoi)
+        cardTheoDoi?.setCardBackgroundColor(MAU_THEO_DOI_BAT)
+
+        if (PhienLamViec.cauHoiGhiAmTamThoi != null) {
+            ttsManager.speak("Cháu đang xem màn hình để trả lời, ông bà đợi một lát nhé.")
+        } else {
+            ttsManager.speak("Cháu đang xem màn hình, ông bà đợi một lát nhé.")
+        }
+
+        val rootNode = rootInActiveWindow
+        if (rootNode == null) {
+            ttsManager.speak("Cháu không thấy màn hình nào cả.")
             tatNutTheoDoi()
             return
         }
-    }
-    if (dangHoiAI) {
-        tatNutTheoDoi()
-        return
+
+        serviceScope.launch(Dispatchers.IO) {
+            thucHienQuetManHinhMotLan(rootNode)
+        }
     }
 
-    dangHoiAI = true
-    // Chuyển ID mục đích (vd: "xem_gplx") sang tên gọi con người đọc được (vd: "Xem giấy phép lái xe")
-    // Trước đây gửi thẳng ID kỹ thuật khiến Gemini không hiểu, hay trả lời "chưa rõ màn hình"
-    val mucDich = PhienLamViec.mucDichHienTai ?: "ông bà chưa nói rõ, hãy dựa vào toàn bộ nội dung màn hình để đoán việc cần làm tiếp theo"
+    private fun tatNutTheoDoi() {
+        Handler(Looper.getMainLooper()).post {
+            val cardTheoDoi = floatingView?.findViewById<CardView>(R.id.cardTheoDoi)
+            cardTheoDoi?.setCardBackgroundColor(MAU_THEO_DOI_TAT)
+            dangQuetManHinh = false
+        }
+    }
 
-    serviceScope.launch {
-        try {
-            // ĐƯA CÂU HỎI HOẶC LỜI PHÀN NÀN VÀO PROMPT ĐỂ AI BIẾT ĐƯỜNG SỬA ĐỔI
-            val contextCauHoi = if (cauHoi != null) "\nLƯU Ý QUAN TRỌNG TỪ ÔNG BÀ (CẦN SỬA ĐỔI NGAY): $cauHoi" else ""
-            val prompt = """
+    private fun thucHienQuetManHinhMotLan(rootNode: AccessibilityNodeInfo) {
+        val packageName = rootNode.packageName?.toString() ?: ""
+        currentPackageName = packageName
+
+        val dichVu = dsDichVu.find { it.tenPackage == packageName }
+        if (dichVu == null) {
+            ttsManager.speak("Ứng dụng này chưa được cháu hỗ trợ ạ.")
+            rootNode.recycle()
+            tatNutTheoDoi()
+            return
+        }
+
+        val semanticTreeGoc = collectSemanticUITree(rootNode)
+        rootNode.recycle()
+        if (semanticTreeGoc.isBlank()) {
+            ttsManager.speak("Màn hình này trống, cháu không thấy thông tin gì ạ.")
+            tatNutTheoDoi()
+            return
+        }
+
+        val semanticTree = lamSachText(semanticTreeGoc, maxLength = 2000)
+        currentTextContent = semanticTree
+
+        // 🚀 CHUYỂN LUỒNG 100% SANG AI: Bỏ qua JSON, gửi thẳng cho Gemini AI quét tự do
+        xuLyManHinhBangAI(dichVu.tenGoi, semanticTree)
+    }
+
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        event ?: return
+        val packageName = event.packageName?.toString() ?: return
+
+        // Chỉ xử lý khi có sự kiện CHUYỂN CỬA SỔ (mở app mới hoặc qua màn hình mới)
+        if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            val dichVu = dsDichVu.find { it.tenPackage == packageName }
+            if (dichVu != null) {
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastEventTime > 4000) {
+                    if (packageName != currentPackageName) {
+                        currentPackageName = packageName
+                        ttsManager.speak(dichVu.cauChaoMung)
+                        hienThiGoiYNutBongBongNeuCan(
+                            "lan_dau_${packageName}",
+                            "Ông bà chạm nút cam bên trên để hỏi, hoặc chạm nút xám bên dưới để cháu xem màn hình và hướng dẫn nhé."
+                        )
+                    } else {
+                        ttsManager.speak(dichVu.cauNhanChuyenManHinh)
+                    }
+                    lastEventTime = currentTime
+                }
+            } else {
+                // Ông bà đã rời app được hỗ trợ (về màn hình chính hoặc app khác)
+                // -> Xóa mục đích cũ, tránh mục đích lần trước lẫn sang lần dùng sau
+                if (currentPackageName != packageName) {
+                    PhienLamViec.mucDichHienTai = null
+                    PhienLamViec.cauHoiGhiAmTamThoi = null
+                }
+                currentPackageName = packageName
+            }
+        }
+    }
+
+    private fun xuLyManHinhBangAI(tenDichVu: String, noiDungManHinh: String) {
+        val cauHoi = PhienLamViec.cauHoiGhiAmTamThoi
+        // Nếu là phàn nàn, gắn thêm từ khóa "COMPLAINT" vào khóa băm để ép hệ thống tạo mới hoàn toàn
+        val isComplaint = cauHoi != null && voiceErrorChecker.isUserComplaining(cauHoi)
+        val hashSuffix =
+            if (isComplaint) ":COMPLAINT:${System.currentTimeMillis()}" else ":${cauHoi ?: ""}"
+        val hashKey = tenDichVu + ":" + noiDungManHinh.replace(Regex("\\d+"), "#") + hashSuffix
+        val screenHash = hashKey.hashCode()
+        // Nếu không phải phàn nàn thì mới check cache cũ
+        if (!isComplaint) {
+            val cachedResponse = screenResponseCache.get(screenHash)
+            if (cachedResponse != null) {
+                ttsManager.speak(cachedResponse)
+                PhienLamViec.cauHoiGhiAmTamThoi = null
+                tatNutTheoDoi()
+                return
+            }
+        }
+        if (dangHoiAI) {
+            tatNutTheoDoi()
+            return
+        }
+
+        dangHoiAI = true
+        // Chuyển ID mục đích (vd: "xem_gplx") sang tên gọi con người đọc được (vd: "Xem giấy phép lái xe")
+        // Trước đây gửi thẳng ID kỹ thuật khiến Gemini không hiểu, hay trả lời "chưa rõ màn hình"
+        val mucDich = PhienLamViec.mucDichHienTai
+            ?: "ông bà chưa nói rõ, hãy dựa vào toàn bộ nội dung màn hình để đoán việc cần làm tiếp theo"
+
+        serviceScope.launch {
+            try {
+                // ĐƯA CÂU HỎI HOẶC LỜI PHÀN NÀN VÀO PROMPT ĐỂ AI BIẾT ĐƯỜNG SỬA ĐỔI
+                val contextCauHoi =
+                    if (cauHoi != null) "\nLƯU Ý QUAN TRỌNG TỪ ÔNG BÀ (CẦN SỬA ĐỔI NGAY): $cauHoi" else ""
+                val prompt = """
                     Ứng dụng: $tenDichVu | Mục tiêu: $mucDich $contextCauHoi
                     Toàn bộ nội dung màn hình (gồm cả nút bấm, ô nhập, thông tin):
                     $noiDungManHinh
                 """.trimIndent()
 
-            val huongDan = geminiHelper.hoiTuDo(prompt)
+                val huongDan = geminiHelper.hoiTuDo(prompt)
 
-            if (huongDan.isNotEmpty() && !huongDan.contains("quá tải") && !isComplaint) {
-                screenResponseCache.put(screenHash, huongDan)
-            }
+                if (huongDan.isNotEmpty() && !huongDan.contains("quá tải") && !isComplaint) {
+                    screenResponseCache.put(screenHash, huongDan)
+                }
 
-            ttsManager.speak(huongDan)
-            PhienLamViec.cauHoiGhiAmTamThoi = null // Giải phóng câu hỏi
+                ttsManager.speak(huongDan)
+                PhienLamViec.cauHoiGhiAmTamThoi = null // Giải phóng câu hỏi
 
-        } finally {
-            dangHoiAI = false
-            withContext(Dispatchers.Main) {
-                tatNutTheoDoi() // BẮT BUỘC TẮT NÚT CON MẮT KHI XONG AI
-            }
-        }
-    }
-}
-
-@Suppress("DEPRECATION")
-private fun rungPhanHoi() {
-    val vibrator = getSystemService(VIBRATOR_SERVICE) as? Vibrator ?: return
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        vibrator.vibrate(VibrationEffect.createOneShot(60, VibrationEffect.DEFAULT_AMPLITUDE))
-    } else {
-        vibrator.vibrate(60)
-    }
-}
-
-private fun lamSachText(text: String, maxLength: Int = 4000): String {
-    return text.replace(Regex("\\s+"), " ")
-        .replace(Regex("(\\S+)(\\s\\1)+"), "$1")
-        .trim()
-        .take(maxLength)
-}
-
-private fun collectSemanticUITree(node: AccessibilityNodeInfo): String {
-    val nutBam = mutableListOf<String>()
-    val oNhap = mutableListOf<String>()
-    val thongTin = mutableListOf<String>()
-
-    fun coTheDocDuoc(str: String): Boolean {
-        // Bỏ qua chuỗi rỗng
-        if (str.isBlank()) return false
-        // Bỏ qua chuỗi quá ngắn (icon thường chỉ có 1-2 ký tự mô tả kỹ thuật)
-        if (str.length < 2) return false
-        // Bỏ qua nếu chuỗi chỉ gồm toàn ký tự đặc biệt/ASCII không có nghĩa
-        // Giữ lại nếu có ít nhất 2 chữ cái có nghĩa (tiếng Việt hoặc chữ thường)
-        val soKyTuCoNghia = str.count { it.isLetter() }
-        if (soKyTuCoNghia < 2) return false
-        return true
-    }
-
-    fun layTextNutBam(n: AccessibilityNodeInfo): String {
-        // Ưu tiên n.text (văn bản hiển thị thật sự) trước
-        // Chỉ dùng contentDescription nếu không có text và contentDescription đủ dài có nghĩa
-        val fromText = n.text?.toString()?.trim() ?: ""
-        val fromHint = n.hintText?.toString()?.trim() ?: ""
-        val fromDesc = n.contentDescription?.toString()?.trim() ?: ""
-
-        return when {
-            fromText.isNotEmpty() -> fromText
-            fromHint.isNotEmpty() -> fromHint
-            // Chỉ dùng contentDescription nếu trông như chữ có nghĩa (không phải tên icon kỹ thuật)
-            fromDesc.isNotEmpty() && coTheDocDuoc(fromDesc) && fromDesc.length >= 3 -> fromDesc
-            else -> ""
-        }
-    }
-
-    fun traverse(n: AccessibilityNodeInfo) {
-        // ⭐ Bỏ qua các node không hiển thị trên màn hình (ví dụ: sidebar menu ẩn)
-        if (!n.isVisibleToUser) return
-
-        if (n.isEditable) {
-            val text = (n.text ?: n.hintText ?: n.contentDescription ?: "").toString().trim()
-            val tenONhap = text.ifEmpty { "Ô nhập liệu" }
-            if (!oNhap.contains(tenONhap)) oNhap.add(tenONhap)
-        } else {
-            val text = layTextNutBam(n)
-            if (text.isNotEmpty() && coTheDocDuoc(text)) {
-                if (n.isClickable) {
-                    if (!nutBam.contains(text)) nutBam.add(text)
-                } else {
-                    if (!thongTin.contains(text)) thongTin.add(text)
+            } finally {
+                dangHoiAI = false
+                withContext(Dispatchers.Main) {
+                    tatNutTheoDoi() // BẮT BUỘC TẮT NÚT CON MẮT KHI XONG AI
                 }
             }
         }
-        for (i in 0 until n.childCount) {
-            val child = n.getChild(i) ?: continue
-            traverse(child)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun rungPhanHoi() {
+        val vibrator = getSystemService(VIBRATOR_SERVICE) as? Vibrator ?: return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(VibrationEffect.createOneShot(60, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            vibrator.vibrate(60)
+        }
+    }
+
+    private fun lamSachText(text: String, maxLength: Int = 4000): String {
+        return text.replace(Regex("\\s+"), " ")
+            .replace(Regex("(\\S+)(\\s\\1)+"), "$1")
+            .trim()
+            .take(maxLength)
+    }
+
+    private fun collectSemanticUITree(node: AccessibilityNodeInfo): String {
+        val nutBam = mutableListOf<String>()
+        val oNhap = mutableListOf<String>()
+        val thongTin = mutableListOf<String>()
+
+        fun coTheDocDuoc(str: String): Boolean {
+            // Bỏ qua chuỗi rỗng
+            if (str.isBlank()) return false
+            // Bỏ qua chuỗi quá ngắn (icon thường chỉ có 1-2 ký tự mô tả kỹ thuật)
+            if (str.length < 2) return false
+            // Bỏ qua nếu chuỗi chỉ gồm toàn ký tự đặc biệt/ASCII không có nghĩa
+            // Giữ lại nếu có ít nhất 2 chữ cái có nghĩa (tiếng Việt hoặc chữ thường)
+            val soKyTuCoNghia = str.count { it.isLetter() }
+            if (soKyTuCoNghia < 2) return false
+            return true
+        }
+
+        fun layTextNutBam(n: AccessibilityNodeInfo): String {
+            // Ưu tiên n.text (văn bản hiển thị thật sự) trước
+            // Chỉ dùng contentDescription nếu không có text và contentDescription đủ dài có nghĩa
+            val fromText = n.text?.toString()?.trim() ?: ""
+            val fromHint = n.hintText?.toString()?.trim() ?: ""
+            val fromDesc = n.contentDescription?.toString()?.trim() ?: ""
+
+            return when {
+                fromText.isNotEmpty() -> fromText
+                fromHint.isNotEmpty() -> fromHint
+                // Chỉ dùng contentDescription nếu trông như chữ có nghĩa (không phải tên icon kỹ thuật)
+                fromDesc.isNotEmpty() && coTheDocDuoc(fromDesc) && fromDesc.length >= 3 -> fromDesc
+                else -> ""
+            }
+        }
+
+        fun traverse(n: AccessibilityNodeInfo) {
+            // ⭐ Bỏ qua các node không hiển thị trên màn hình (ví dụ: sidebar menu ẩn)
+            if (!n.isVisibleToUser) return
+
+            if (n.isEditable) {
+                val text = (n.text ?: n.hintText ?: n.contentDescription ?: "").toString().trim()
+                val tenONhap = text.ifEmpty { "Ô nhập liệu" }
+                if (!oNhap.contains(tenONhap)) oNhap.add(tenONhap)
+            } else {
+                val text = layTextNutBam(n)
+                if (text.isNotEmpty() && coTheDocDuoc(text)) {
+                    if (n.isClickable) {
+                        if (!nutBam.contains(text)) nutBam.add(text)
+                    } else {
+                        if (!thongTin.contains(text)) thongTin.add(text)
+                    }
+                }
+            }
+            for (i in 0 until n.childCount) {
+                val child = n.getChild(i) ?: continue
+                traverse(child)
+                child.recycle()
+            }
+        }
+        traverse(node)
+
+        val sb = StringBuilder()
+        if (nutBam.isNotEmpty()) sb.append("[Nút bấm]: ").append(nutBam.joinToString(", "))
+            .append("\n")
+        if (oNhap.isNotEmpty()) sb.append("[Ô nhập]: ").append(oNhap.joinToString(", "))
+            .append("\n")
+        if (thongTin.isNotEmpty()) sb.append("[Thông tin]: ").append(thongTin.joinToString(", "))
+
+        val result = sb.toString()
+        // 🖨️ In ra Logcat để debug thực tế - xem màn hình nào bị lấy nhầm icon
+        android.util.Log.d("ChauOiService", "📋 [SEMANTIC TREE]\n$result")
+        return result
+    }
+
+    private fun collectAllText(node: AccessibilityNodeInfo): String {
+        val sb = StringBuilder()
+        node.text?.let { sb.append(it).append(" ") }
+        node.contentDescription?.let { sb.append(it).append(" ") }
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i) ?: continue
+            sb.append(collectAllText(child))
             child.recycle()
         }
+        return sb.toString()
     }
-    traverse(node)
 
-    val sb = StringBuilder()
-    if (nutBam.isNotEmpty()) sb.append("[Nút bấm]: ").append(nutBam.joinToString(", ")).append("\n")
-    if (oNhap.isNotEmpty()) sb.append("[Ô nhập]: ").append(oNhap.joinToString(", ")).append("\n")
-    if (thongTin.isNotEmpty()) sb.append("[Thông tin]: ").append(thongTin.joinToString(", "))
-
-    val result = sb.toString()
-    // 🖨️ In ra Logcat để debug thực tế - xem màn hình nào bị lấy nhầm icon
-    android.util.Log.d("ChauOiService", "📋 [SEMANTIC TREE]\n$result")
-    return result
-}
-
-private fun collectAllText(node: AccessibilityNodeInfo): String {
-    val sb = StringBuilder()
-    node.text?.let { sb.append(it).append(" ") }
-    node.contentDescription?.let { sb.append(it).append(" ") }
-    for (i in 0 until node.childCount) {
-        val child = node.getChild(i) ?: continue
-        sb.append(collectAllText(child))
-        child.recycle()
+    override fun onInterrupt() {
+        ttsManager.stop()
+        speechManager?.stopListening()
     }
-    return sb.toString()
-}
 
-override fun onInterrupt() {
-    ttsManager.stop()
-    speechManager?.stopListening()
-}
+    override fun onDestroy() {
+        super.onDestroy()
+        ttsManager.shutdown()
+        speechManager?.destroy()
+        speechManager = null
+        serviceScope.cancel()
 
-override fun onDestroy() {
-    super.onDestroy()
-    ttsManager.shutdown()
-    speechManager?.destroy()
-    speechManager = null
-    serviceScope.cancel()
-
-    floatingView?.let {
-        try {
-            windowManager.removeView(it)
-        } catch (e: Exception) {
+        floatingView?.let {
+            try {
+                windowManager.removeView(it)
+            } catch (e: Exception) {
+            }
         }
+        floatingView = null
     }
-    floatingView = null
-}
 }

@@ -94,8 +94,12 @@ class AIIntentMatcher(context: Context, modelName: String = "universal_sentence_
         var appDungNhat: CauHinhDichVu? = null
         var doTuongDongCaoNhat: Float = -1.0f
 
-        // Nâng ngưỡng chấp nhận lên 0.82f (Cực kỳ khắt khe, chỉ chấp nhận khi câu nói giống hệt ngữ nghĩa)
-        val nguongChapNhan = 0.82f
+        if (cauNoiCuaOngBa.length > 80 && (cauNoiCuaOngBa.contains("chạm nút") || cauNoiCuaOngBa.contains("màn hình"))) {
+            android.util.Log.w("ChauOiAI", "Phát hiện tiếng vọng dài, bỏ qua AI.")
+            return null
+        }
+
+        val nguongChapNhan = 0.87f
 
         // 2. So sánh vector câu nói của người dùng với các câu mẫu của từng app
         for (dichVu in danhSach) {

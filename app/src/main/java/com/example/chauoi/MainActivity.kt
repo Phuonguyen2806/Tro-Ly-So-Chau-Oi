@@ -29,7 +29,10 @@ import com.example.chauoi.ai.GeminiHelper
 import com.example.chauoi.ai.AIIntentMatcher
 import com.example.chauoi.service.ScreenReaderService
 import com.example.chauoi.dichVu.PhienLamViec
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
 class MainActivity : AppCompatActivity() {
 
     companion object {
@@ -52,6 +55,7 @@ class MainActivity : AppCompatActivity() {
     // Danh sách dịch vụ nạp từ assets/services/*.json
     private lateinit var dsDichVu: List<CauHinhDichVu>
     private var lastScannedScreenText: String = ""
+    private val micHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,9 +88,30 @@ class MainActivity : AppCompatActivity() {
         initSpeechRecognizer()
 
         btnMicro.setOnClickListener {
-            setListeningStateUI(true)
-            ttsManager.stop()
-            speechManager.startListening()
+            // Nếu đang lắng nghe thì bấm lần nữa = TẮT mic, trả về màu cam
+            if (speechManager.isListening) {
+                speechManager.stopListening()
+                ttsManager.stop()
+                micHandler.removeCallbacksAndMessages(null)
+                setListeningStateUI(false)
+                return@setOnClickListener
+            }
+
+            btnMicro.isEnabled = false // Khóa nút chống bấm đúp
+            ttsManager.stop() // Tắt loa
+
+            // CHƯA ĐỔI MÀU XANH NGAY, BÁO ĐANG CHUẨN BỊ
+            tvStatus.text = "⏳ Đang chuẩn bị mic..."
+            tvStatus.setBackgroundResource(R.drawable.bg_status_pill_ready)
+
+            // Xóa bỏ các lệnh chờ cũ nếu có (chống dội lệnh)
+            micHandler.removeCallbacksAndMessages(null)
+
+            // Chờ đúng 1 giây rồi mới gọi lệnh mở Mic
+            micHandler.postDelayed({
+                speechManager.startListening()
+                btnMicro.isEnabled = true // Mở khóa nút
+            }, 500)
         }
 
         // Gán sự kiện chạm trực tiếp các thẻ dịch vụ
@@ -237,54 +262,71 @@ class MainActivity : AppCompatActivity() {
     private fun initSpeechRecognizer() {
         speechManager = SpeechRecognitionManager(
             context = this,
+            onReady = {
+                setListeningStateUI(true)
+            },
+            onSpeechEnded = {
+                tvStatus.text = "⏳ Cháu đang nghe hiểu..."
+                btnMicro.setCardBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.accent_mic_idle))
+                tvStatus.setBackgroundResource(R.drawable.bg_status_pill_ready)
+            },
             onResult = { sentence ->
                 setListeningStateUI(false)
                 val cleanSentence = sentence.lowercase()
+
+                // 🟢 THÊM BỘ LỌC TIẾNG VỌNG (ECHO) 🟢
+                if (cleanSentence.contains("con mắt ở dưới") ||
+                    cleanSentence.contains("chạm vào nút") ||
+                    cleanSentence.contains("đang xem màn hình")) {
+                    android.util.Log.w(TAG, "Mic thu lại tiếng app, hủy bỏ lệnh.")
+                    return@SpeechRecognitionManager
+                }
+
                 tvStatus.text = "💬 Ông bà vừa nói: \"$sentence\""
 
                 // 1. KIỂM TRA CƠ CHẾ PHÀN NÀN / SỬA SAI
                 if (voiceErrorChecker.isUserComplaining(sentence)) {
-                    // Xóa cache màn hình hiện tại để ép AI phân tích mới
-                    val currentScreenKey = if (lastScannedScreenText.isNotBlank()) {
-                        lastScannedScreenText.take(200)
-                    } else {
-                        "man_hinh_mac_dinh"
-                    }
-
-                    // Xóa khỏi cache toàn cục bên ScreenReaderService nếu có khớp
+                    val currentScreenKey = if (lastScannedScreenText.isNotBlank()) lastScannedScreenText.take(200) else "man_hinh_mac_dinh"
                     ScreenReaderService.screenResponseCache.remove(currentScreenKey.hashCode())
-
                     PhienLamViec.cauHoiGhiAmTamThoi = "Ông bà vừa báo bước trước bị sai ($sentence). Hãy hướng dẫn lại thật chi tiết bằng cách khác."
-
                     ttsManager.speak("Cháu đang xem lại màn hình để hướng dẫn chính xác hơn, ông bà đợi chút nhé.")
 
-                    lifecycleScope.launch {
+                    lifecycleScope.launch(Dispatchers.IO) {
                         try {
                             val prompt = "Ông bà đang phàn nàn vì làm sai: $sentence. Hãy đọc lại nội dung và đưa ra hướng dẫn thay thế dễ hiểu hơn."
                             val freshInstruction = geminiHelper.hoiTuDo(prompt)
-                            ttsManager.speak(freshInstruction)
-                            tvStatus.text = freshInstruction
+                            withContext(Dispatchers.Main) {
+                                ttsManager.speak(freshInstruction)
+                                tvStatus.text = freshInstruction
+                            }
                         } catch (e: Exception) {
-                            ttsManager.speak("Cháu xin lỗi, mạng bị lỗi, ông bà đợi cháu chút nhé.")
+                            withContext(Dispatchers.Main) {
+                                ttsManager.speak("Cháu xin lỗi, mạng bị lỗi, ông bà đợi cháu chút nhé.")
+                            }
                         }
                     }
                     return@SpeechRecognitionManager
                 }
-                // 2. XỬ LÝ TÌM DỊCH VỤ DỰA TRÊN AI EMBEDDING
-                val dichVuPhuHop = aiIntentMatcher.timAppPhuHop(cleanSentence, dsDichVu)
 
-                if (dichVuPhuHop != null) {
-                    setListeningStateUI(false)
-                    tvStatus.text = "💬 Ông bà vừa nói: \"$sentence\""
-                    ttsManager.speak(dichVuPhuHop.cauPhanHoiKhiMo)
-                    btnMicro.postDelayed({
-                        dichVuPhuHop.moUngDung(this@MainActivity)
-                    }, 3500)
-                } else {
-                    // 3. NẾU AI KHÔNG TÌM THẤY Ý ĐỊNH PHÙ HỢP
-                    val cauThongBaoChuaHoTro = "Chức năng này cháu chưa hỗ trợ, ông bà vui lòng chọn trực tiếp thẻ dịch vụ bên dưới nhé."
-                    setErrorStateUI("⚠️ Chức năng này cháu chưa hỗ trợ: \"$sentence\"\nÔng bà hãy thử nói lại hoặc bấm thẻ dịch vụ bên dưới nhé.")
-                    ttsManager.speak(cauThongBaoChuaHoTro)
+                // 2. XỬ LÝ TÌM DỊCH VỤ DỰA TRÊN AI (🟢 ĐƯA XUỐNG LUỒNG NỀN ĐỂ KHÔNG TREO UI 🟢)
+                lifecycleScope.launch(Dispatchers.IO) {
+                    // Chạy mô hình AI tốn thời gian ở luồng I/O
+                    val dichVuPhuHop = aiIntentMatcher.timAppPhuHop(cleanSentence, dsDichVu)
+
+                    // Chuyển kết quả về luồng UI (Main) để tương tác giao diện
+                    withContext(Dispatchers.Main) {
+                        if (dichVuPhuHop != null) {
+                            tvStatus.text = "💬 Ông bà vừa nói: \"$sentence\""
+                            ttsManager.speak(dichVuPhuHop.cauPhanHoiKhiMo)
+                            btnMicro.postDelayed({
+                                dichVuPhuHop.moUngDung(this@MainActivity)
+                            }, 3500)
+                        } else {
+                            val cauThongBaoChuaHoTro = "Chức năng này cháu chưa hỗ trợ, ông bà vui lòng chọn trực tiếp thẻ dịch vụ bên dưới nhé."
+                            setErrorStateUI("⚠️ Chức năng này cháu chưa hỗ trợ: \"$sentence\"\nÔng bà hãy thử nói lại hoặc bấm thẻ dịch vụ bên dưới.")
+                            ttsManager.speak(cauThongBaoChuaHoTro)
+                        }
+                    }
                 }
             },
             onErrorMsg = { error ->
