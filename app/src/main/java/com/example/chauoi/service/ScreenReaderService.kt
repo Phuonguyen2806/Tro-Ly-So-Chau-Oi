@@ -483,7 +483,8 @@ class ScreenReaderService : AccessibilityService() {
             if (str.isBlank()) return false
             // Số thuần túy
             val phanConLaiSauKhiBoDauPhanCach = str.filterNot { it.isDigit() || it in ":-/,. " }
-            if (phanConLaiSauKhiBoDauPhanCach.isEmpty() && str.any { it.isDigit() }) return true            // Bỏ qua chuỗi quá ngắn (icon thường chỉ có 1-2 ký tự mô tả kỹ thuật)
+            if (phanConLaiSauKhiBoDauPhanCach.isEmpty() && str.any { it.isDigit() }) return true
+            // Bỏ qua chuỗi quá ngắn (icon thường chỉ có 1-2 ký tự mô tả kỹ thuật)
             if (str.length < 2) return false
             // Bỏ qua nếu chuỗi chỉ gồm toàn ký tự đặc biệt/ASCII không có nghĩa
             // Giữ lại nếu có ít nhất 2 chữ cái có nghĩa (tiếng Việt hoặc chữ thường)
