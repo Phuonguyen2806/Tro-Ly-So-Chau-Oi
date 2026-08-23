@@ -18,8 +18,8 @@ class GeminiHelper {
 
     private fun createGenerativeModel(key: String): GenerativeModel {
         return GenerativeModel(
-            modelName = "gemini-flash-latest",
-//            modelName = "gemini-3.6-flash",
+//            modelName = "gemini-flash-latest",
+            modelName = "gemini-3.6-flash",
             apiKey = key,
             systemInstruction = content {
                 text(

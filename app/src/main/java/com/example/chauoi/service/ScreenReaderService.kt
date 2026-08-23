@@ -159,7 +159,7 @@ class ScreenReaderService : AccessibilityService() {
                     // 🟢 ĐÃ TÁCH BIỆT HOÀN TOÀN KHỎI ĐIỀU HƯỚNG APP 🟢
                     // Dù người dùng nói gì ở nút trôi nổi, ta cũng chỉ coi là hỏi về màn hình hiện tại. Không bao giờ nhảy app.
                     PhienLamViec.cauHoiGhiAmTamThoi = sentence
-                    ttsManager.speak("Ông bà hãy chạm vào nút hình con mắt ở dưới, để cháu xem màn hình và trả lời nhé.")
+                    kichHoatQuetManHinh()
                 },
                 onErrorMsg = { error ->
                     Log.w(TAG, "SpeechRecognizer warning: $error")
@@ -481,7 +481,9 @@ class ScreenReaderService : AccessibilityService() {
         fun coTheDocDuoc(str: String): Boolean {
             // Bỏ qua chuỗi rỗng
             if (str.isBlank()) return false
-            // Bỏ qua chuỗi quá ngắn (icon thường chỉ có 1-2 ký tự mô tả kỹ thuật)
+            // Số thuần túy
+            val phanConLaiSauKhiBoDauPhanCach = str.filterNot { it.isDigit() || it in ":-/,. " }
+            if (phanConLaiSauKhiBoDauPhanCach.isEmpty() && str.any { it.isDigit() }) return true            // Bỏ qua chuỗi quá ngắn (icon thường chỉ có 1-2 ký tự mô tả kỹ thuật)
             if (str.length < 2) return false
             // Bỏ qua nếu chuỗi chỉ gồm toàn ký tự đặc biệt/ASCII không có nghĩa
             // Giữ lại nếu có ít nhất 2 chữ cái có nghĩa (tiếng Việt hoặc chữ thường)
@@ -506,8 +508,42 @@ class ScreenReaderService : AccessibilityService() {
             }
         }
 
+        // Kích thước màn hình thật, dùng để nhận diện các node "phủ gần hết màn hình"
+        val kichThuocManHinh: android.graphics.Point by lazy {
+            val point = android.graphics.Point()
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                val bounds = windowManager.currentWindowMetrics.bounds
+                point.set(bounds.width(), bounds.height())
+            } else {
+                @Suppress("DEPRECATION")
+                windowManager.defaultDisplay.getRealSize(point)
+            }
+            point
+        }
+
+        // Kiểm tra 1 vùng có chiếm >= 80% diện tích màn hình hay không (dấu hiệu là 1 lớp
+        // dialog/màn hình toàn màn hình, khác với các nút/label nhỏ thông thường)
+        fun laGanNhuToanManHinh(bounds: android.graphics.Rect): Boolean {
+            val dienTichManHinh = kichThuocManHinh.x.toLong() * kichThuocManHinh.y.toLong()
+            if (dienTichManHinh <= 0) return false
+            val dienTichNode = bounds.width().toLong() * bounds.height().toLong()
+            return dienTichNode >= dienTichManHinh * 8 / 10
+        }
+
+        // Kiểm tra vùng "sau" (lopSau) có thật sự ĐÈ LÊN phần lớn vùng "trước" (lopTruoc) hay
+        // không, dựa trên PHẦN GIAO NHAU về vị trí - không chỉ so diện tích suông. Nhờ vậy,
+        // 2 khối lớn nhưng nằm CẠNH NHAU (không chồng vị trí) sẽ KHÔNG bị coi là đè lên nhau.
+        fun coBiDeLenBoi(lopTruoc: android.graphics.Rect, lopSau: android.graphics.Rect): Boolean {
+            val giao = android.graphics.Rect(lopTruoc)
+            if (!giao.intersect(lopSau)) return false
+            val dienTichLopTruoc = lopTruoc.width().toLong() * lopTruoc.height().toLong()
+            if (dienTichLopTruoc <= 0) return false
+            val dienTichGiao = giao.width().toLong() * giao.height().toLong()
+            return dienTichGiao >= dienTichLopTruoc * 8 / 10
+        }
+
         fun traverse(n: AccessibilityNodeInfo) {
-            // ⭐ Bỏ qua các node không hiển thị trên màn hình (ví dụ: sidebar menu ẩn)
+            // Bỏ qua các node không hiển thị trên màn hình (ví dụ: sidebar menu ẩn)
             if (!n.isVisibleToUser) return
 
             if (n.isEditable) {
@@ -524,7 +560,25 @@ class ScreenReaderService : AccessibilityService() {
                     }
                 }
             }
+
+            val cacLopToLon = mutableListOf<Pair<Int, android.graphics.Rect>>()
             for (i in 0 until n.childCount) {
+                val con = n.getChild(i) ?: continue
+                val bounds = android.graphics.Rect()
+                con.getBoundsInScreen(bounds)
+                if (laGanNhuToanManHinh(bounds)) cacLopToLon.add(i to bounds)
+                con.recycle()
+            }
+            val boQuaChiSo: Set<Int> = if (cacLopToLon.size > 1) {
+                val lopCuoiCung = cacLopToLon.last().second
+                cacLopToLon.dropLast(1)
+                    .filter { (_, bounds) -> coBiDeLenBoi(bounds, lopCuoiCung) }
+                    .map { it.first }
+                    .toSet()
+            } else emptySet()
+
+            for (i in 0 until n.childCount) {
+                if (i in boQuaChiSo) continue
                 val child = n.getChild(i) ?: continue
                 traverse(child)
                 child.recycle()
